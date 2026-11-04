@@ -8,7 +8,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host",
     "typecheck": "tsc --noEmit",
-    "test": "node tests/controls.mjs"
+    "test": "node tests/controls.mjs && node tests/onboarding.mjs"
   },
   "devDependencies": {
     "typescript": "^7.0.2",

@@ -1,25 +1,25 @@
 import { ctx, W, H, clock, reduce, layer } from '../core/canvas';
-import { C, lin, rad, rr, circ, text, wrap, shadow, type Paint } from '../core/draw';
+import { C, FONT, lin, rad, rr, circ, text, wrap } from '../core/draw';
+import { audioEnabled, canSpeak } from '../core/audio';
+import { drawCards, drawTopics, drawQuiz, SPEAK_BTN } from './meta';
+import { progress } from '../meta/progress';
+import { TOPICS, INFO, infoOf } from '../meta/content';
+
+const TOTAL_CARDS = Object.keys(INFO).length;
+const INFO_CARD = (): string => infoOf(g.game.cmd)?.card ?? '';
+import { PLAY_BTN, CARDS_BTN, TEACH_BTN, AGAIN_BTN, HOME_BTN, HUD_HOME, HUD_SOUND, SOUND_BTN, goldFace, homeIcon, soundIcon, panel, button } from './widgets';
+export { type Btn, PLAY_BTN, AGAIN_BTN, HOME_BTN, HUD_HOME, inBtn, inHudHome } from './widgets';
 import { bayraa } from '../art/bayraa';
 import { ger } from '../art/props';
 import { sun, cloud, ridge, hills, grass, chimneySmoke, vignette, grain } from '../art/scenery';
 import { g } from '../flow';
 
-export interface Btn { x: number; y: number; w: number; h: number }
-export const PLAY_BTN: Btn = { x: 70, y: 540, w: 220, h: 66 };
-export const AGAIN_BTN: Btn = { x: 60, y: 470, w: 240, h: 64 };
-export const HOME_BTN: Btn = { x: 100, y: 556, w: 160, h: 48 };
-/** Small round home button in the HUD, next to the score. */
-export const HUD_HOME = { x: 88, y: 36, r: 20 };
-export const inHudHome = (x: number, y: number): boolean => Math.hypot(x - HUD_HOME.x, y - HUD_HOME.y) < HUD_HOME.r + 10;
-export const inBtn = (b: Btn, x: number, y: number): boolean => x > b.x && x < b.x + b.w && y > b.y && y < b.y + b.h + 6;
-
-const goldFace = (y0: number, y1: number): Paint => lin(0, y0, 0, y1, [[0, '#ffd75a'], [0.5, C.gold], [1, '#d18f00']]);
-
 export function render(): void {
   ctx.save();
   ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip();
   if (g.state === 'title') { drawTitle(); vignette(0.3); grain(); }
+  else if (g.state === 'cards') drawCards();
+  else if (g.state === 'topics') drawTopics();
   else {
     g.game.draw();
     vignette();
@@ -28,6 +28,7 @@ export function render(): void {
     if (g.state === 'intro') drawIntro();
     else if (g.state === 'play') drawPlay();
     else if (g.state === 'result') drawResult();
+    else if (g.state === 'quiz') drawQuiz();
     else drawOver();
   }
   ctx.restore();
@@ -52,29 +53,8 @@ function hud(): void {
   ctx.lineWidth = 3; ctx.strokeStyle = C.ink; ctx.stroke();
   ctx.strokeStyle = 'rgba(120,70,0,.45)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(36, 36, 16, 0, Math.PI * 2); ctx.stroke();
   text(String(g.score), 36, 37, 20, C.ink);
-  if (g.state !== 'over') homeIcon(HUD_HOME.x, HUD_HOME.y, HUD_HOME.r);
+  if (g.state !== 'over') { homeIcon(HUD_HOME.x, HUD_HOME.y, HUD_HOME.r); soundIcon(HUD_SOUND.x, HUD_SOUND.y, HUD_SOUND.r, audioEnabled()); }
   for (let i = 0; i < 3; i++) heart(W - 30 - i * 32, 36, 11, i < g.lives);
-}
-
-/** Round glassy button with a house pictogram. */
-function homeIcon(x: number, y: number, r: number): void {
-  ctx.fillStyle = 'rgba(10,12,30,.3)'; circ(x + 1, y + 3, r);
-  ctx.fillStyle = rad(x, y, r, [[0, '#ffffff'], [0.7, '#e6e9f2'], [1, '#b9bfd0']], x - 6, y - 7); circ(x, y, r);
-  ctx.lineWidth = 3; ctx.strokeStyle = C.ink; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
-  ctx.fillStyle = C.ink;
-  ctx.beginPath(); ctx.moveTo(x - 10, y - 1); ctx.lineTo(x, y - 10); ctx.lineTo(x + 10, y - 1); ctx.closePath(); ctx.fill();
-  rr(x - 7, y - 2, 14, 11, 1.5);
-  ctx.fillStyle = '#e6e9f2'; rr(x - 2.5, y + 2, 5, 7, 1);
-}
-
-function panel(x: number, y: number, w: number, h: number, r: number, fill: Paint, line: string = C.ink): void {
-  ctx.save();
-  ctx.shadowColor = 'rgba(10,12,30,.45)'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 6;
-  ctx.fillStyle = fill; rr(x, y, w, h, r);
-  ctx.restore();
-  ctx.lineWidth = 4; ctx.strokeStyle = line; ctx.beginPath(); ctx.roundRect(x, y, w, h, r); ctx.stroke();
-  ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.roundRect(x + 6, y + 6, w - 12, h - 12, Math.max(2, r - 6)); ctx.stroke();
 }
 
 function drawIntro(): void {
@@ -82,7 +62,11 @@ function drawIntro(): void {
   const pop = reduce ? 1 : 1 + 0.25 * Math.max(0, 1 - g.st * 6);
   ctx.save(); ctx.translate(W / 2, 300); ctx.scale(pop, pop);
   panel(-150, -60, 300, 120, 20, goldFace(-60, 60));
-  const size = g.game.cmd.length > 13 ? 26 : 32;
+  // largest size up to 32 that fits inside the 300-wide banner
+  let size = 32;
+  ctx.font = `900 ${size}px ${FONT}`;
+  const w = ctx.measureText(g.game.cmd).width;
+  if (w > 268) size = Math.max(18, Math.floor(size * 268 / w));
   text(g.game.cmd, 0, -14, size, C.ink);
   text(g.game.sub, 0, 30, 15, C.ink, { w: 500 });
   ctx.restore();
@@ -92,11 +76,16 @@ function drawIntro(): void {
     text('Дарж эхлэх · Enter', W / 2, 455, 19, '#fff');
   }
   if (g.faster) text('ХУРДАН!', W / 2, 200, 36, C.red, { stroke: '#fff', sw: 8, drop: true });
-  if (g.game.keys) text(g.game.keys, W / 2, 400, 15, '#fff', { stroke: C.ink, sw: 4 });
+  if (g.game.keys) text(g.game.keys, W / 2, g.practice ? 500 : 400, 15, '#fff', { stroke: C.ink, sw: 4 });
 }
 
 function drawPlay(): void {
-  if (g.game.keys) text(g.game.keys, W / 2, 112, 13, '#fff', { w: 500, stroke: C.ink, sw: 4 });
+  if (g.practice) {
+    text('ДАДЛАГА · Амь хасагдахгүй', W / 2, 112, 14, C.gold, { stroke: C.ink, sw: 4 });
+    text(g.game.sub, W / 2, 585, 15, '#fff', { stroke: C.ink, sw: 4 });
+    g.game.hint?.();
+  }
+  if (g.game.keys) text(g.game.keys, W / 2, g.practice ? 132 : 112, 13, '#fff', { w: 500, stroke: C.ink, sw: 4 });
   text(g.game.cmd, W / 2, 84, 18, '#fff', { stroke: C.ink, sw: 5, drop: true });
   const f = 1 - g.frac, bw = W - 32;
   ctx.fillStyle = 'rgba(27,31,59,.5)'; rr(16, 616, bw, 12, 6);
@@ -116,6 +105,14 @@ function drawResult(): void {
     text(g.winText, 0, 0, size, goldFace(-size / 2, size / 2), { stroke: C.ink, sw: 10, drop: true });
     ctx.restore();
     if (g.practice) text('Одоо оноотой тоглоё!', W / 2, 300, 19, '#fff', { stroke: C.ink, sw: 4 });
+    if (g.newCard) {
+      const k = reduce ? 1 : Math.min(1, g.st * 4);
+      ctx.save(); ctx.translate(W / 2, 370); ctx.scale(k, k); ctx.rotate(reduce ? 0 : Math.sin(clock.t * 3) * 0.04);
+      panel(-70, -44, 140, 88, 12, lin(0, -44, 0, 44, [[0, '#ffffff'], [1, '#e8ecf6']]));
+      text('ШИНЭ КАРТ!', 0, -18, 18, C.red);
+      text(INFO_CARD(), 0, 12, 15, C.ink, { w: 700 });
+      ctx.restore();
+    }
     return;
   }
   ctx.fillStyle = 'rgba(27,31,59,.62)'; ctx.fillRect(0, 0, W, H);
@@ -124,24 +121,8 @@ function drawResult(): void {
   panel(28, 300, W - 56, 170, 18, lin(0, 300, 0, 470, [[0, '#ffffff'], [1, '#eef0f6']]), 'rgba(27,31,59,.0)');
   text('Санаж яваарай', W / 2, 330, 16, C.red);
   wrap(g.game.tip, W / 2, 366, W - 96, 16, C.ink);
+  if (canSpeak()) soundIcon(SPEAK_BTN.x, SPEAK_BTN.y, SPEAK_BTN.r, true);
   if (g.st > 0.8) text('Дарж үргэлжлүүл', W / 2, 520, 15, '#fff', { w: 500 });
-}
-
-function button(b: Btn, label: string, secondary = false): void {
-  if (secondary) {
-    ctx.fillStyle = '#0f1230'; rr(b.x, b.y + 5, b.w, b.h, b.h / 2);
-    ctx.fillStyle = lin(0, b.y, 0, b.y + b.h, [[0, '#ffffff'], [1, '#cfd4e2']]); rr(b.x, b.y, b.w, b.h, b.h / 2);
-    ctx.lineWidth = 3; ctx.strokeStyle = C.ink; ctx.beginPath(); ctx.roundRect(b.x, b.y, b.w, b.h, b.h / 2); ctx.stroke();
-    text(label, b.x + b.w / 2, b.y + b.h / 2 + 1, 19, C.ink);
-    return;
-  }
-  shadow(b.x + b.w / 2, b.y + b.h + 10, b.w * 0.5, 8, 0.35);
-  ctx.fillStyle = '#0f1230'; rr(b.x, b.y + 6, b.w, b.h, b.h / 2);
-  ctx.fillStyle = goldFace(b.y, b.y + b.h); rr(b.x, b.y, b.w, b.h, b.h / 2);
-  ctx.fillStyle = lin(0, b.y, 0, b.y + b.h * 0.5, [[0, 'rgba(255,255,255,.55)'], [1, 'rgba(255,255,255,0)']]);
-  rr(b.x + 10, b.y + 4, b.w - 20, b.h * 0.45, b.h / 3);
-  ctx.lineWidth = 3; ctx.strokeStyle = C.ink; ctx.beginPath(); ctx.roundRect(b.x, b.y, b.w, b.h, b.h / 2); ctx.stroke();
-  text(label, b.x + b.w / 2, b.y + b.h / 2 + 1, 24, C.ink);
 }
 
 function paintTitle(): void {
@@ -172,7 +153,13 @@ function drawTitle(): void {
   text('Баяраа', W / 2, 205, 60, goldFace(175, 235), { stroke: C.ink, sw: 11, drop: true });
   text('Монгол амьдралын аюулаас Баярааг авар', W / 2, 256, 15, C.ink, { w: 700, stroke: 'rgba(255,255,255,.6)', sw: 4 });
   button(PLAY_BTN, 'ТОГЛОХ');
-  if (g.best) text('Шилдэг оноо: ' + g.best, W / 2, 625, 14, '#fff', { w: 700, stroke: C.ink, sw: 4 });
+  button(CARDS_BTN, 'КАРТУУД ' + progress.cards.size + '/' + TOTAL_CARDS, true);
+  button(TEACH_BTN, 'БАГШ', true);
+  soundIcon(SOUND_BTN.x, SOUND_BTN.y, SOUND_BTN.r, audioEnabled());
+  if (progress.topics.size < TOPICS.length) {
+    text('Сэдэв: ' + TOPICS.filter(t => progress.topics.has(t.id)).map(t => t.label).join(', '), W / 2, 304, 13, '#fff', { w: 700, stroke: C.ink, sw: 4 });
+  }
+  if (g.best) text('Шилдэг оноо: ' + g.best, W / 2, 282, 13, '#fff', { w: 700, stroke: C.ink, sw: 4 });
 }
 
 function drawOver(): void {
@@ -182,6 +169,7 @@ function drawOver(): void {
   ctx.fillStyle = rad(W / 2, 290, 90, [[0, 'rgba(244,180,0,.25)'], [1, 'rgba(244,180,0,0)']]); circ(W / 2, 290, 90);
   text(String(g.score), W / 2, 290, 86, goldFace(250, 330), { stroke: '#fff', sw: 6 });
   text(g.score >= g.best && g.score > 0 ? 'Шинэ дээд амжилт!' : 'Шилдэг: ' + g.best, W / 2, 365, 18, '#fff', { w: 700 });
+  if (g.quiz.list.length) text('Асуулт: ' + g.quiz.right + '/' + g.quiz.list.length + '  (+' + g.bonus + ' оноо)', W / 2, 392, 15, C.gold, { w: 700 });
   bayraa(W / 2, 455, 0.7, { mood: 'happy', wave: true, noShadow: true });
   if (g.st > 0.6) { button(AGAIN_BTN, 'ДАХИН ТОГЛОХ'); button(HOME_BTN, 'НҮҮР ХУУДАС', true); }
 }

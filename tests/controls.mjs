@@ -10,7 +10,7 @@ function load(path, names, bindings = {}) {
 }
 const ctl = { wins: 0, losses: 0, win() { this.wins++; }, lose() { this.losses++; } };
 const { DragKeys } = load('core/dragKeys.ts', ['DragKeys']);
-const gameBindings = { ctl, DragKeys, W: 360, H: 640, rand: (a,b) => (a+b)/2, dist: (a,b,c,d) => Math.hypot(a-c,b-d) };
+const gameBindings = { ctl, DragKeys, sfx() {}, W: 360, H: 640, rand: (a,b) => (a+b)/2, dist: (a,b,c,d) => Math.hypot(a-c,b-d) };
 const { Hat } = load('games/hat.ts', ['Hat'], gameBindings);
 const hat = new Hat(); hat.init();
 hat.key('Enter', true); hat.key(' ', true); assert.equal(hat.drag, false, 'keyboard activation no longer selects');
@@ -43,13 +43,68 @@ cow.down(); cow.key('ArrowDown', false); assert.equal(cow.hold, true);
 cow.up(); assert.equal(cow.hold, false);
 cow.key(' ', true); cow.cancelInput(); assert.equal(cow.hold, false);
 const { Ice } = load('games/ice.ts', ['Ice'], gameBindings);
-const ice = new Ice(); ice.init(); ice.key('ArrowLeft', true); assert.equal(ice.lane, 0);
-ice.dead = true; ice.resultUpdate(0.1); assert.ok(ice.rot > 0);
+const ice = new Ice(); ice.init(); ice.key('ArrowLeft', true); assert.ok(ice.w < 0, 'Left leans Bayraa left');
+ice.dead = true; ice.a = 0.3; ice.w = 0; const lean = Math.abs(ice.a); ice.resultUpdate(0.1); assert.ok(Math.abs(ice.a) > lean, 'fall finishes during result');
+
+const { Dust } = load('games/dust.ts', ['Dust'], gameBindings);
+const dust = new Dust(); dust.init();
+const gerAt = dust.kinds.indexOf('ger'), wrong = dust.kinds.findIndex(k => k !== 'ger');
+const w0 = ctl.wins, l0 = ctl.losses;
+dust.pick(wrong); assert.equal(ctl.losses, l0 + 1, 'running to the sheep or tree loses');
+dust.pick(gerAt); assert.equal(ctl.wins, w0, 'only one choice per round');
+dust.init(); dust.t = 10; dust.pick(dust.kinds.indexOf('ger')); assert.equal(ctl.wins, w0, 'cannot pick what the storm has hidden');
+dust.init(); dust.pick(dust.kinds.indexOf('ger')); assert.equal(ctl.wins, w0 + 1, 'running to the ger wins');
+
+const { Cabinet } = load('games/cabinet.ts', ['Cabinet'], { ...gameBindings, CAB: undefined });
+const cab = new Cabinet(); cab.init();
+const cw0 = ctl.wins, cl0 = ctl.losses;
+for (let i = 0; i < 2; i++) { const it = cab.items.find(t => !t.stored); cab.select(it.x, it.y); cab.move(270, 220); cab.select(270, 220); }
+assert.equal(cab.items.filter(t => t.stored).length, 2, 'items dropped in the cabinet are stored');
+const last = cab.items.find(t => !t.stored);
+cab.select(last.x, last.y); cab.move(270, 220); cab.cancelInput(); cab.up();
+assert.equal(ctl.wins, cw0, 'cancelling a drag does not store the item');
+assert.ok(last.y >= 440, 'a cancelled item falls back to the floor');
+cab.select(last.x, last.y); cab.move(270, 220); cab.select(270, 220);
+assert.equal(ctl.wins, cw0 + 1, 'storing all three wins');
+cab.init(); cab.bx = cab.items[0].x + 10; cab.by = cab.items[0].y; cab.update(0.016);
+assert.equal(ctl.losses, cl0 + 1, 'the toddler reaching an item loses');
+
+const { River } = load('games/river.ts', ['River'], gameBindings);
+const river = new River(); river.init();
+const rw0 = ctl.wins, rl0 = ctl.losses;
+for (let i = 0; i < 120 && ctl.wins === rw0; i++) { if (i % 6 === 0) river.down(); river.update(1 / 60); }
+assert.equal(ctl.wins, rw0 + 1, 'swimming steadily reaches the bank');
+river.init(); for (let i = 0; i < 600 && ctl.losses === rl0; i++) river.update(1 / 60);
+assert.equal(ctl.losses, rl0 + 1, 'doing nothing drifts into deep water');
+
+// end-of-run quiz and teacher-mode topic filter
+{
+  const qctl = {};
+  const mk = cmd => ({ cmd, lose: 'x', dead: false, init() {}, update() {} });
+  const home = mk('home-game'), street = mk('street-game');
+  const quiz = [{ cmd: 'home-game', q: '?', a: ['a', 'b', 'c'], ok: 1 }, { cmd: 'street-game', q: '?', a: ['a', 'b', 'c'], ok: 2 }];
+  const qflow = load('flow.ts', ['g', 'startRun', 'step', 'afterResult', 'answerQuiz'], {
+    ctl: qctl, games: [home, street], sfx() {}, navigator: {},
+    meta: { unlock() { return false; }, allowed: m => m === home, quiz: () => quiz },
+    localStorage: { getItem(k) { return k === 'bayraa-learned-v1' ? '["home-game","street-game"]' : null; }, setItem() {} },
+  });
+  qflow.startRun();
+  for (let i = 0; i < 3; i++) {
+    assert.equal(qflow.g.game, home, 'teacher mode plays only the chosen topic');
+    qflow.step(1.5); qctl.lose('miss'); qflow.afterResult();
+  }
+  assert.equal(qflow.g.state, 'quiz', 'losing the last life opens the quiz');
+  qflow.answerQuiz(1); qflow.answerQuiz(0);
+  assert.equal(qflow.g.quiz.right, 1, 'only the first answer counts');
+  qflow.step(1.3); assert.equal(qflow.g.quiz.i, 1);
+  qflow.answerQuiz(0); qflow.step(1.3);
+  assert.equal(qflow.g.state, 'over'); assert.equal(qflow.g.score, 1, 'each right answer is a bonus point');
+}
 
 const flowCtl = {};
 let gameplay = 0, cosmetics = 0;
 const micro = { cmd: 'test', lose: 'miss', dead: false, timeoutWin: true, init() {}, update() { gameplay++; }, resultUpdate() { cosmetics++; } };
-const flow = load('flow.ts', ['g','startRun','step','afterResult'], { ctl: flowCtl, games: [micro], sfx() {}, localStorage: { getItem() { return null; }, setItem() {} }, navigator: {} });
+const flow = load('flow.ts', ['g','startRun','step','afterResult'], { ctl: flowCtl, games: [micro], sfx() {}, meta: { unlock() { return false; }, allowed() { return true; }, quiz() { return []; } }, localStorage: { getItem(k) { return k === 'bayraa-learned-v1' ? '["test"]' : null; }, setItem() {} }, navigator: {} });
 flow.startRun(); flow.step(1.5); flow.step(5);
 assert.equal(flow.g.score, 1); assert.equal(flowCtl.playing, false);
 flow.step(0.1); assert.equal(gameplay, 1); assert.equal(cosmetics, 1);
@@ -73,7 +128,7 @@ let downs = 0, moves = 0, ups = 0, cancels = 0;
 const keyEvents = [];
 const inputGame = { down() { downs++; }, move() { moves++; }, up() { ups++; }, cancelInput() { cancels++; }, key(...args) { keyEvents.push(args); } };
 const g = { game: inputGame, state: 'play', round: 1, st: 0 };
-const { installInput } = load('core/input.ts', ['installInput'], { cv, view: { offX: 0, offY: 0, scale: 1 }, g, document: doc, addEventListener: win.addEventListener.bind(win), unlockAudio() {}, startRun() {}, afterResult() {}, AGAIN_BTN: {}, inBtn() { return false; } });
+const { installInput } = load('core/input.ts', ['installInput'], { cv, view: { offX: 0, offY: 0, scale: 1 }, g, document: doc, addEventListener: win.addEventListener.bind(win), unlockAudio() {}, startRun() {}, afterResult() {}, beginPractice() {}, goHome() {}, uiPress() { return false; }, uiKey() { return false; } });
 const sync = installInput();
 const pointer = id => ({ pointerId: id, button: 0, isPrimary: true, clientX: 100, clientY: 300 });
 cv.emit('pointerdown', pointer(1)); cv.emit('pointerdown', pointer(2));

@@ -2,16 +2,16 @@ import { gesture } from '../ui/gesture';
 import { ctx, W, H, clock, layer } from '../core/canvas';
 import { lin, rad, rr, circ, seg, text, rand, dist, C } from '../core/draw';
 import { ctl } from '../core/ctl';
-import { bayraa, mongolHat } from '../art/bayraa';
+import { bayraa, winterHat } from '../art/bayraa';
 import { snowfall, sun, ridge, hills, mottle, puffSprite, drawPuff } from '../art/scenery';
 import type { Micro } from './types';
 import { DragKeys } from '../core/dragKeys';
 
 export class Hat implements Micro {
   readonly cmd = 'МАЛГАЙГАА ӨМС!';
-  readonly sub = 'Малгайг толгой руу нь чир';
+  readonly sub = 'Лоовуузыг толгой руу нь чир';
   readonly lose = 'Хөлдчихлөө!';
-  readonly tip = 'Хасах 40 градуст чих, хамар хамгийн түрүүнд хөлддөг. Малгай, бээлий, ороолтоо заавал өмс.';
+  readonly tip = 'Хасах 40 градуст чих, хамар хамгийн түрүүнд хөлддөг. Чихийг нь бүрхдэг дулаан малгай, бээлий, ороолтоо заавал өмс.';
   dead = false;
   readonly keys = 'Баруун товч: авах / тавих';
   private arrows = new DragKeys();
@@ -51,14 +51,14 @@ export class Hat implements Micro {
       const p = (t * 0.7 + i / 4) % 1;
       drawPuff(img, 186 + p * 40, 499 - p * 26, 5 + p * 16, 0.6 * (1 - p));
     }
-    bayraa(180, 600, 1.3, { hat: this.on, shiver: !this.on, frozen, mood: this.dead ? 'dead' : this.on ? 'happy' : 'scared' });
+    bayraa(180, 600, 1.3, { hat: this.on ? 'winter' : false, shiver: !this.on, frozen, mood: this.dead ? 'dead' : this.on ? 'happy' : 'scared' });
     if (!this.on) {
       if (this.drag) {
         ctx.strokeStyle = C.gold; ctx.lineWidth = 3; ctx.setLineDash([6, 5]);
         ctx.beginPath(); ctx.arc(180, 469, 55, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
       }
       if (this.drag) { ctx.fillStyle = 'rgba(10,20,40,.18)'; circ(this.hx + 6, this.hy + 16, 24); }
-      mongolHat(this.hx, this.hy, this.drag ? 1.45 : 1.3);
+      winterHat(this.hx, this.hy, this.drag ? 1.45 : 1.3);
     }
     snowfall(0.95);
     // frost creeping in from the edges

@@ -1,6 +1,7 @@
 import { ctx, W, H, clock, reduce, layer } from '../core/canvas';
 import { lin, rad, rr, ell, seg, circ, text, dist, shadow, glow, C } from '../core/draw';
 import { ctl } from '../core/ctl';
+import { sfx } from '../core/audio';
 import { rng } from '../core/rng';
 import { bayraa } from '../art/bayraa';
 import { planks, skirting, mottle } from '../art/scenery';
@@ -24,7 +25,7 @@ export class Socket implements Micro {
     if (isDown && (k === 'Enter' || k === ' ')) this.down(250, 300);
   }
   down(x: number, y: number): void {
-    if (dist(x, y, 250, 300) < 60 || dist(x, y, 120, 478) < 55) { this.zap = 0.7; this.dead = true; ctl.lose(this.lose); }
+    if (dist(x, y, 250, 300) < 60 || dist(x, y, 120, 478) < 55) { this.zap = 0.7; this.dead = true; sfx('zap'); ctl.lose(this.lose); }
   }
   draw(): void {
     layer('socket-room', paintRoom);

@@ -2,6 +2,7 @@ import { gesture } from '../ui/gesture';
 import { ctx, W, H, clock, reduce, layer } from '../core/canvas';
 import { lin, rad, rr, circ, seg, text, rand, glow, C } from '../core/draw';
 import { ctl } from '../core/ctl';
+import { sfx } from '../core/audio';
 import { rng } from '../core/rng';
 import { bayraa } from '../art/bayraa';
 import { car, CAR_PAINTS, type CarPaint } from '../art/props';
@@ -22,6 +23,7 @@ export class Crossing implements Micro {
   readonly sub = 'Ногоон асахад дэлгэц дээр дар';
   readonly lose = 'Хоцорлоо!';
   readonly tip = 'Явган хүний гарцаар зөвхөн ногоон гэрэл асахад гар. Гарахаасаа өмнө зүүн, баруун тийшээ хар. Утсаа ширтэж бүү алх.';
+  readonly keys = 'Space / ↑ — зам гарах';
   dead = false;
   private t = 0;
   private redT = 1.5;
@@ -45,10 +47,15 @@ export class Crossing implements Micro {
 
   private get green(): boolean { return this.t >= this.redT; }
 
-  update(dt: number): void {
-    this.t += dt;
+  /** Cosmetic: walk across (or stumble) and fade the crash flash. */
+  resultUpdate(dt: number): void {
     if (this.hit > 0) this.hit -= dt;
     if (this.walking) this.walk = Math.min(1, this.walk + dt / 1.6);
+  }
+
+  update(dt: number): void {
+    this.t += dt;
+    this.resultUpdate(dt);
 
     // traffic
     for (const l of [0, 1] as const) {
@@ -86,7 +93,7 @@ export class Crossing implements Micro {
     if (this.walking || this.dead) return;
     this.walking = true;
     if (this.green) ctl.win();
-    else { this.dead = true; this.crashed = true; this.hit = 0.5; ctl.lose('Машин мөргөчихлөө!'); }
+    else { this.dead = true; this.crashed = true; this.hit = 0.5; sfx('horn'); ctl.lose('Машин мөргөчихлөө!'); }
   }
   /** Only show where to tap once it is actually safe. */
   hint(): void {

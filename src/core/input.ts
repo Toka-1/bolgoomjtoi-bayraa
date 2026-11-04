@@ -1,10 +1,10 @@
 import { cv, view } from './canvas';
 import { unlockAudio } from './audio';
-import { g, startRun, afterResult } from '../flow';
-import { AGAIN_BTN, inBtn } from '../ui/screens';
+import { g, startRun, afterResult, beginPractice, goHome } from '../flow';
+import { uiPress, uiKey } from '../ui/meta';
 import type { Micro } from '../games';
 
-const CONTROL_KEYS = new Set(['Enter', ' ', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Escape']);
+const CONTROL_KEYS = new Set(['Enter', ' ', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Escape', '1', '2', '3']);
 
 export function installInput(): () => void {
   let pointer: number | null = null;
@@ -41,8 +41,8 @@ export function installInput(): () => void {
     const [x, y] = point(e);
     if (x < 0 || x > 360 || y < 0 || y > 640) return;
     clear();
-    if (g.state === 'title') { startRun(); return; }
-    if (g.state === 'over') { if (g.st > 0.6 && inBtn(AGAIN_BTN, x, y)) startRun(); return; }
+    // menus, HUD buttons and practice start are handled by the UI layer
+    if (uiPress(x, y)) return;
     if (g.state === 'result') { if (!g.ok && g.st > 0.8) afterResult(); return; }
     if (g.state !== 'play') return;
     pointer = e.pointerId; claim();
@@ -72,11 +72,19 @@ export function installInput(): () => void {
     if (document.activeElement !== cv || e.ctrlKey || e.metaKey || e.altKey || !CONTROL_KEYS.has(e.key)) return;
     e.preventDefault();
     if (e.repeat || held.has(e.key)) return;
-    if (e.key === 'Escape') { clear(); return; }
+    if (e.key === 'Escape') {
+      // first Escape drops a held gesture; with nothing held it leaves to the title screen
+      const busy = pointer !== null || selectedPointer !== null || held.size > 0;
+      clear();
+      if (!busy && g.state !== 'title') goHome();
+      return;
+    }
     if (pointer !== null) return;
     unlockAudio();
+    if (uiKey(e.key)) return;
     const activate = e.key === 'Enter' || e.key === ' ';
     if (activate && (g.state === 'title' || (g.state === 'over' && g.st > 0.6))) { clear(); startRun(); return; }
+    if (activate && g.state === 'intro' && g.practice) { clear(); beginPractice(); return; }
     if (activate && g.state === 'result' && !g.ok && g.st > 0.8) { clear(); afterResult(); return; }
     if (g.state !== 'play') return;
     if (!current()) clear();
