@@ -8,6 +8,10 @@ import { g } from '../flow';
 export interface Btn { x: number; y: number; w: number; h: number }
 export const PLAY_BTN: Btn = { x: 70, y: 540, w: 220, h: 66 };
 export const AGAIN_BTN: Btn = { x: 60, y: 470, w: 240, h: 64 };
+export const HOME_BTN: Btn = { x: 100, y: 556, w: 160, h: 48 };
+/** Small round home button in the HUD, next to the score. */
+export const HUD_HOME = { x: 88, y: 36, r: 20 };
+export const inHudHome = (x: number, y: number): boolean => Math.hypot(x - HUD_HOME.x, y - HUD_HOME.y) < HUD_HOME.r + 10;
 export const inBtn = (b: Btn, x: number, y: number): boolean => x > b.x && x < b.x + b.w && y > b.y && y < b.y + b.h + 6;
 
 const goldFace = (y0: number, y1: number): Paint => lin(0, y0, 0, y1, [[0, '#ffd75a'], [0.5, C.gold], [1, '#d18f00']]);
@@ -48,7 +52,19 @@ function hud(): void {
   ctx.lineWidth = 3; ctx.strokeStyle = C.ink; ctx.stroke();
   ctx.strokeStyle = 'rgba(120,70,0,.45)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(36, 36, 16, 0, Math.PI * 2); ctx.stroke();
   text(String(g.score), 36, 37, 20, C.ink);
+  if (g.state !== 'over') homeIcon(HUD_HOME.x, HUD_HOME.y, HUD_HOME.r);
   for (let i = 0; i < 3; i++) heart(W - 30 - i * 32, 36, 11, i < g.lives);
+}
+
+/** Round glassy button with a house pictogram. */
+function homeIcon(x: number, y: number, r: number): void {
+  ctx.fillStyle = 'rgba(10,12,30,.3)'; circ(x + 1, y + 3, r);
+  ctx.fillStyle = rad(x, y, r, [[0, '#ffffff'], [0.7, '#e6e9f2'], [1, '#b9bfd0']], x - 6, y - 7); circ(x, y, r);
+  ctx.lineWidth = 3; ctx.strokeStyle = C.ink; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+  ctx.fillStyle = C.ink;
+  ctx.beginPath(); ctx.moveTo(x - 10, y - 1); ctx.lineTo(x, y - 10); ctx.lineTo(x + 10, y - 1); ctx.closePath(); ctx.fill();
+  rr(x - 7, y - 2, 14, 11, 1.5);
+  ctx.fillStyle = '#e6e9f2'; rr(x - 2.5, y + 2, 5, 7, 1);
 }
 
 function panel(x: number, y: number, w: number, h: number, r: number, fill: Paint, line: string = C.ink): void {
@@ -114,7 +130,14 @@ function drawResult(): void {
   if (g.st > 0.8) text('Дарж үргэлжлүүл', W / 2, 520, 15, '#fff', { w: 500 });
 }
 
-function button(b: Btn, label: string): void {
+function button(b: Btn, label: string, secondary = false): void {
+  if (secondary) {
+    ctx.fillStyle = '#0f1230'; rr(b.x, b.y + 5, b.w, b.h, b.h / 2);
+    ctx.fillStyle = lin(0, b.y, 0, b.y + b.h, [[0, '#ffffff'], [1, '#cfd4e2']]); rr(b.x, b.y, b.w, b.h, b.h / 2);
+    ctx.lineWidth = 3; ctx.strokeStyle = C.ink; ctx.beginPath(); ctx.roundRect(b.x, b.y, b.w, b.h, b.h / 2); ctx.stroke();
+    text(label, b.x + b.w / 2, b.y + b.h / 2 + 1, 19, C.ink);
+    return;
+  }
   shadow(b.x + b.w / 2, b.y + b.h + 10, b.w * 0.5, 8, 0.35);
   ctx.fillStyle = '#0f1230'; rr(b.x, b.y + 6, b.w, b.h, b.h / 2);
   ctx.fillStyle = goldFace(b.y, b.y + b.h); rr(b.x, b.y, b.w, b.h, b.h / 2);
@@ -163,5 +186,5 @@ function drawOver(): void {
   text(String(g.score), W / 2, 290, 86, goldFace(250, 330), { stroke: '#fff', sw: 6 });
   text(g.score >= g.best && g.score > 0 ? 'Шинэ дээд амжилт!' : 'Шилдэг: ' + g.best, W / 2, 365, 18, '#fff', { w: 700 });
   bayraa(W / 2, 455, 0.7, { mood: 'happy', wave: true, noShadow: true });
-  if (g.st > 0.6) button(AGAIN_BTN, 'ДАХИН ТОГЛОХ');
+  if (g.st > 0.6) { button(AGAIN_BTN, 'ДАХИН ТОГЛОХ'); button(HOME_BTN, 'НҮҮР ХУУДАС', true); }
 }

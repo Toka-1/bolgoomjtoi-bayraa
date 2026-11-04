@@ -72,6 +72,10 @@ function lose(msg: string): void {
 ctl.win = win;
 ctl.lose = lose;
 
+function saveBest(): void {
+  if (g.score > g.best) { g.best = g.score; try { localStorage.setItem(BEST_KEY, String(g.best)); } catch { /* storage blocked */ } }
+}
+
 export function afterResult(): void {
   if (g.practice) {
     if (g.ok) {
@@ -82,10 +86,15 @@ export function afterResult(): void {
     prepareRound();
     return;
   }
-  if (g.lives <= 0) {
-    g.state = 'over'; g.st = 0;
-    if (g.score > g.best) { g.best = g.score; try { localStorage.setItem(BEST_KEY, String(g.best)); } catch { /* storage blocked */ } }
-  } else next();
+  if (g.lives <= 0) { g.state = 'over'; g.st = 0; saveBest(); }
+  else next();
+}
+
+/** Leave the run and go back to the title screen; the score still counts toward the best. */
+export function goHome(): void {
+  saveBest();
+  g.state = 'title'; g.st = 0; g.frac = 0; g.practice = false;
+  ctl.playing = false;
 }
 
 export function beginPractice(): void {
