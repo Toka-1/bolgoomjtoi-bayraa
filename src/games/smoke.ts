@@ -1,3 +1,4 @@
+import { gesture } from '../ui/gesture';
 import { ctx, W, H, clock, layer } from '../core/canvas';
 import { lin, rad, rr, ell, seg, circ } from '../core/draw';
 import { ctl } from '../core/ctl';
@@ -26,6 +27,7 @@ export class Smoke implements Micro {
   }
   resultUpdate(dt: number): void { if (this.open) this.smoke = Math.max(0, this.smoke - dt * 1.5); }
 
+  hint(): void { if (!this.open) gesture(270, 210, 270, 210, 52); }
   draw(): void {
     layer('smoke-room', paintRoom);
     windowView(this.open);

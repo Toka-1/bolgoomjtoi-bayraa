@@ -78,8 +78,19 @@ export function cow(x: number, y: number, s: number): void {
 }
 
 /* ---------- vehicles ---------- */
-/** A red sedan seen from the side, facing right. (x, y) is the rear bumper at road level. */
-export function car(x: number, y: number, brake: boolean, shake = 0): void {
+/** Body paint: highlight, base, shade, deep shadow. */
+export type CarPaint = readonly [string, string, string, string];
+export const CAR_RED: CarPaint = ['#ff7a6c', C.red, '#b21c14', '#6e100b'];
+export const CAR_PAINTS: readonly CarPaint[] = [
+  CAR_RED,
+  ['#8fb8ff', '#2f6fe0', '#1a47a8', '#0e2a66'],
+  ['#ffffff', '#e4e7ec', '#a9b0bb', '#5e6570'],
+  ['#ffe27a', '#f5c400', '#c48f00', '#7a5500'],
+  ['#7a7f8c', '#3d414c', '#24272f', '#101216'],
+];
+
+/** A sedan seen from the side, facing right. (x, y) is the rear bumper at road level. */
+export function car(x: number, y: number, brake: boolean, shake = 0, paint: CarPaint = CAR_RED): void {
   shadow(x + 40, y + 1, 46, 6, 0.45);
   ctx.save(); ctx.translate(x + shake, y);
   ctx.beginPath();
@@ -88,7 +99,7 @@ export function car(x: number, y: number, brake: boolean, shake = 0): void {
   ctx.quadraticCurveTo(57, -54, 60, -50); ctx.lineTo(68, -35); ctx.lineTo(74, -33);
   ctx.quadraticCurveTo(79, -31, 79, -24); ctx.lineTo(79, -12); ctx.quadraticCurveTo(79, -8, 75, -8);
   ctx.lineTo(5, -8); ctx.quadraticCurveTo(2, -8, 2, -12); ctx.closePath();
-  ctx.fillStyle = lin(0, -54, 0, -8, [[0, '#ff7a6c'], [0.32, C.red], [0.72, '#b21c14'], [1, '#6e100b']]);
+  ctx.fillStyle = lin(0, -54, 0, -8, [[0, paint[0]], [0.32, paint[1]], [0.72, paint[2]], [1, paint[3]]]);
   ctx.fill();
   ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 1.5; seg(8, -30, 72, -30);
   ctx.strokeStyle = 'rgba(60,0,0,.35)'; ctx.lineWidth = 1; seg(4, -17, 77, -17);
@@ -102,7 +113,7 @@ export function car(x: number, y: number, brake: boolean, shake = 0): void {
   ctx.fillStyle = 'rgba(255,255,255,.28)';
   ctx.beginPath(); ctx.moveTo(30, -35); ctx.lineTo(40, -51); ctx.lineTo(46, -51); ctx.lineTo(36, -35); ctx.fill();
   ctx.restore();
-  ctx.fillStyle = '#7e140d'; ctx.fillRect(41, -51, 3, 16);
+  ctx.fillStyle = paint[3]; ctx.fillRect(41, -51, 3, 16);
   ctx.strokeStyle = 'rgba(60,0,0,.5)'; ctx.lineWidth = 1; seg(43, -34, 43, -12);
   ctx.fillStyle = '#d9d9de'; rr(46, -28, 6, 2, 1);
   // lights, bumpers
@@ -115,7 +126,7 @@ export function car(x: number, y: number, brake: boolean, shake = 0): void {
   ctx.restore();
 }
 function wheel(x: number, y: number, r: number, rot: number): void {
-  ctx.fillStyle = '#3a0907'; ctx.beginPath(); ctx.arc(x, y, r + 2.5, Math.PI, 0); ctx.fill();
+  ctx.fillStyle = 'rgba(10,8,8,.75)'; ctx.beginPath(); ctx.arc(x, y, r + 2.5, Math.PI, 0); ctx.fill();
   ctx.fillStyle = rad(x, y, r, [[0, '#2c2c32'], [0.8, '#18181c'], [1, '#0c0c0e']]); circ(x, y, r);
   ctx.fillStyle = rad(x, y, r * 0.58, [[0, '#f2f3f6'], [1, '#8a8f98']], x - 1.5, y - 1.5); circ(x, y, r * 0.56);
   ctx.strokeStyle = '#6a6f78'; ctx.lineWidth = 1.4;

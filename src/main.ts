@@ -29,7 +29,12 @@ function frame(now: number): void {
 }
 if (import.meta.env.DEV) {
   const q = new URLSearchParams(location.search).get('g');
-  if (q !== null) debugStart(Number(q));
+  if (q !== null) {
+    debugStart(Number(q));
+    // ?t=N fast-forwards N seconds of game time (for screenshots)
+    const ff = Number(new URLSearchParams(location.search).get('t')) || 0;
+    for (let i = 0; i < ff * 60; i++) { clock.t += 1 / 60; step(1 / 60); }
+  }
 }
 cv.focus();
 requestAnimationFrame(frame);

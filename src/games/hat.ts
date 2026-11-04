@@ -1,3 +1,4 @@
+import { gesture } from '../ui/gesture';
 import { ctx, W, H, clock, layer } from '../core/canvas';
 import { lin, rad, rr, circ, seg, text, rand, dist, C } from '../core/draw';
 import { ctl } from '../core/ctl';
@@ -39,6 +40,7 @@ export class Hat implements Micro {
     this.drag = false;
     if (dist(this.hx, this.hy, 180, 469) < 55) { this.on = true; ctl.win(); }
   }
+  hint(): void { if (!this.on && !this.drag) gesture(this.hx, this.hy - 14, 180, 455, 45); }
   draw(): void {
     layer('hat-steppe', paintSteppe);
     const cold = this.on ? 0 : ctl.playing ? ctl.frac : this.dead ? 1 : 0;

@@ -1,3 +1,4 @@
+import { gesture } from '../ui/gesture';
 import { ctx, W, H, clock, reduce, layer } from '../core/canvas';
 import { lin, rad, rr, seg, text, C, circ } from '../core/draw';
 import { ctl } from '../core/ctl';

@@ -18,6 +18,8 @@ export interface Micro {
   cancelInput?(): void;
   readonly keys?: string;
   draw(): void;
+  /** Optional demonstration overlay, shown only during first-time practice. */
+  hint?(): void;
   down?(x: number, y: number): void;
   /** Right-click toggles mouse selection; returns whether the object is held. */
   select?(x: number, y: number): boolean;
