@@ -97,7 +97,7 @@ export class Dust implements Micro {
     const c = this.choice;
     const e = this.run * this.run * (3 - 2 * this.run);
     const tx = c >= 0 ? SLOTS[c] : 180, ty = c >= 0 ? HY + 12 : 590;
-    const bx = 180 + (tx - 180) * e, by = 590 + (ty - 590) * e, bs = 1 - 0.58 * e;
+    const bx = 180 + (tx - 180) * e, by = 590 + (ty - 590) * e, bs = 1.6 - 1.18 * e;
     const kind = c >= 0 ? this.kinds[c] : null;
     const hidden = kind === 'ger' && this.run > 0.92;
     if (!hidden) {
@@ -117,7 +117,7 @@ export class Dust implements Micro {
 }
 
 function drawKind(kind: Kind, x: number, y: number, broken: boolean): void {
-  if (kind === 'ger') { ger(x, y, 0.42); return; }
+  if (kind === 'ger') { ger(x, y, 1); return; }
   if (kind === 'sheep') { sheep(x + (reduce ? 0 : Math.sin(clock.t * 1.3) * 6), y); return; }
   tree(x, y, broken);
 }

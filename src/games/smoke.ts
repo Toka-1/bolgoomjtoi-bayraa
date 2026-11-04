@@ -34,7 +34,7 @@ export class Smoke implements Micro {
     pipe(84, 0, 400, 22);
     stove(40, 390, 110, 110);
     if (this.open) lightShaft();
-    bayraa(220, 575, 1.2, {
+    bayraa(230, 575, 1.65, {
       mood: this.dead ? 'dead' : this.open ? 'happy' : 'scared',
       green: !this.open && this.smoke > 0.45, rot: this.dead ? -0.25 : 0,
     });

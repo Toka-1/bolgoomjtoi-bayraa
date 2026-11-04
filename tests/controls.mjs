@@ -11,10 +11,11 @@ function load(path, names, bindings = {}) {
 const ctl = { wins: 0, losses: 0, win() { this.wins++; }, lose() { this.losses++; } };
 const { DragKeys } = load('core/dragKeys.ts', ['DragKeys']);
 const gameBindings = { ctl, DragKeys, sfx() {}, W: 360, H: 640, rand: (a,b) => (a+b)/2, dist: (a,b,c,d) => Math.hypot(a-c,b-d) };
-const { Hat } = load('games/hat.ts', ['Hat'], gameBindings);
+const { Hat, AVATAR, HEAD_Y } = load('games/hat.ts', ['Hat', 'AVATAR', 'HEAD_Y'], gameBindings);
+assert.equal(HEAD_Y, AVATAR.y - 101 * AVATAR.scale, 'hat target follows the rendered head');
 const hat = new Hat(); hat.init();
 hat.key('Enter', true); hat.key(' ', true); assert.equal(hat.drag, false, 'keyboard activation no longer selects');
-hat.select(hat.hx, hat.hy - 14); hat.move(180, 455); hat.select(180, 455);
+hat.select(hat.hx, hat.hy - 14); hat.move(AVATAR.x, HEAD_Y - 14); hat.select(AVATAR.x, HEAD_Y - 14);
 assert.equal(ctl.wins, 1, 'hat can be picked up, moved and dropped with right-click');
 const { Baby } = load('games/baby.ts', ['Baby'], gameBindings);
 const baby = new Baby(); baby.init();
@@ -42,6 +43,39 @@ assert.equal(cow.hold, true, 'releasing one brake key preserves another');
 cow.down(); cow.key('ArrowDown', false); assert.equal(cow.hold, true);
 cow.up(); assert.equal(cow.hold, false);
 cow.key(' ', true); cow.cancelInput(); assert.equal(cow.hold, false);
+const cowLosses = ctl.losses, cowWins = ctl.wins;
+cow.init(); cow.t0 = 0.3;
+for (let i = 0; i < 300 && ctl.losses === cowLosses && ctl.wins === cowWins; i++) cow.update(1 / 60);
+assert.equal(ctl.losses, cowLosses + 1, 'unbraked car hits the resized cow');
+cow.dead = false; cow.init(); cow.t0 = 0.3; cow.down();
+for (let i = 0; i < 300 && ctl.wins === cowWins; i++) {
+  if (cow.cowY >= 516) cow.up();
+  cow.update(1 / 60);
+}
+assert.equal(ctl.wins, cowWins + 1, 'waiting for the resized cow still permits a safe crossing');
+assert.equal(ctl.losses, cowLosses + 1);
+const { Crossing, LANES, CAR_LEN, ZEBRA_L, ZEBRA_R, GAP } = load('games/crossing.ts', ['Crossing', 'LANES', 'CAR_LEN', 'ZEBRA_L', 'ZEBRA_R', 'GAP'], { ...gameBindings, CAR_PAINTS: [[]] });
+const crossing = new Crossing(); crossing.redT = 0;
+crossing.cars = [
+  { x: -220, lane: 1, paint: [], v: 230 },
+  { x: 400, lane: 0, paint: [], v: 230 },
+];
+for (let i = 0; i < 360; i++) crossing.update(1 / 60);
+const near = crossing.cars.filter(c => c.lane === 1).sort((a,b) => b.x-a.x);
+const far = crossing.cars.filter(c => c.lane === 0).sort((a,b) => a.x-b.x);
+assert.ok(near[0].x + CAR_LEN * LANES[1].s <= ZEBRA_L - 6 + 0.01, 'enlarged cars stop before the crossing');
+assert.ok(far[0].x >= ZEBRA_R + 6 - 0.01);
+crossing.cars = [
+  { x: 100, lane: 1, paint: [], v: 230 }, { x: -130, lane: 1, paint: [], v: 230 },
+  { x: 10, lane: 0, paint: [], v: 230 }, { x: 210, lane: 0, paint: [], v: 230 },
+];
+for (let i = 0; i < 120; i++) {
+  crossing.update(1 / 60);
+  for (const lane of [0, 1]) {
+    const cars = crossing.cars.filter(c => c.lane === lane).sort((a,b) => a.x-b.x);
+    if (cars.length === 2) assert.ok(cars[1].x - cars[0].x >= CAR_LEN * LANES[lane].s + GAP - 0.01, 'queue spacing includes rendered car length');
+  }
+}
 const { Ice } = load('games/ice.ts', ['Ice'], gameBindings);
 const ice = new Ice(); ice.init(); ice.key('ArrowLeft', true); assert.ok(ice.w < 0, 'Left leans Bayraa left');
 ice.dead = true; ice.a = 0.3; ice.w = 0; const lean = Math.abs(ice.a); ice.resultUpdate(0.1); assert.ok(Math.abs(ice.a) > lean, 'fall finishes during result');

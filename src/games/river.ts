@@ -13,6 +13,9 @@ const WATER_Y = 400;
 /** Reach the bank on the left to win, drift past the buoys on the right to lose. */
 const SHORE_X = 70, DEEP_X = 318;
 const KICK = 160;
+const AVATAR_SCALE = 1.35;
+// Shoulder height sets immersion; scaling the child must not lift him out of the water.
+const SURFACE_Y = WATER_Y + 14;
 
 export class River implements Micro {
   readonly cmd = 'ЭРЭГ РҮҮ СЭЛ!';
@@ -70,21 +73,23 @@ export class River implements Micro {
 
     // Bayraa in the water: only head, shoulders and arms show above the surface
     const bob = reduce ? 0 : Math.sin(t * 5) * 2;
-    const climb = this.safe ? Math.min(1, (SHORE_X - this.x + 34) / 34) : 0;
-    const by = WATER_Y + 62 + bob + this.sink * 60 - climb * 50;
+    const climb = this.safe ? Math.min(1, (SHORE_X - this.x) / 34) : 0;
+    const swimFeet = SURFACE_Y + 66 * AVATAR_SCALE;
+    const by = swimFeet + bob + this.sink * 100 - climb * (swimFeet - WATER_Y);
     ctx.save();
-    ctx.beginPath(); ctx.rect(0, 0, W, WATER_Y + 14 - climb * 40); ctx.clip();
-    bayraa(this.x, by, 0.8, {
+    // Once he climbs onto the bank, show his full body and ground shadow.
+    if (climb < 1) { ctx.beginPath(); ctx.rect(0, 0, W, SURFACE_Y); ctx.clip(); }
+    bayraa(this.x, by, AVATAR_SCALE, {
       mood: this.dead ? 'scared' : this.safe ? 'happy' : this.x > 250 ? 'scared' : 'ok',
-      arms: this.stroke > 0 ? 1 : 0.55, wave: this.dead, noShadow: true,
+      arms: this.stroke > 0 ? 1 : 0.55, wave: this.dead, noShadow: climb < 1,
     });
     ctx.restore();
     // ripples around him
     ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 2;
     for (let k = 0; k < 2; k++) {
       const p = ((t * 1.4 + k * 0.5) % 1);
-      ctx.globalAlpha = 1 - p;
-      ctx.beginPath(); ctx.ellipse(this.x, WATER_Y + 14, 24 + p * 26, 5 + p * 4, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.globalAlpha = (1 - p) * (1 - climb) * (1 - this.sink);
+      ctx.beginPath(); ctx.ellipse(this.x, SURFACE_Y, 30 + p * 30, 6 + p * 4, 0, 0, Math.PI * 2); ctx.stroke();
     }
     ctx.globalAlpha = 1;
     if (this.stroke > 0) {

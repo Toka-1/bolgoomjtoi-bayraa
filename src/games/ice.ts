@@ -81,7 +81,7 @@ export class Ice implements Micro {
     // feet slide on a slip
     const slide = this.slip > 0 && !reduce ? this.slipDir * Math.sin((0.25 - this.slip) * 40) * 3 : 0;
     const danger = Math.abs(this.a) / FALL;
-    bayraa(180 + slide, 562, 1, {
+    bayraa(180 + slide, 562, 1.65, {
       rot: this.a,
       arms: this.dead ? 1 : 0.35 + danger * 0.5,
       mood: this.dead ? 'dead' : danger > 0.55 ? 'scared' : 'ok',

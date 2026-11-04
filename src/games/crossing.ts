@@ -10,7 +10,7 @@ import { mottle, chimneySmoke } from '../art/scenery';
 import type { Micro } from './types';
 
 /** Lanes: far lane drives left, near lane drives right. `y` is road level, `s` the perspective scale. */
-const LANES = [{ y: 378, s: 0.82, dir: -1 }, { y: 452, s: 1, dir: 1 }] as const;
+const LANES = [{ y: 378, s: 1.9, dir: -1 }, { y: 452, s: 2.4, dir: 1 }] as const;
 /** The zebra crossing spans these x values; cars stop before it on green. */
 const ZEBRA_L = 122, ZEBRA_R = 238;
 const CAR_LEN = 80, GAP = 34, SPEED = 230;
@@ -64,16 +64,17 @@ export class Crossing implements Micro {
       if (this.spawn[l] <= 0) {
         this.spawn[l] = rand(0.55, 1.1);
         const dir = LANES[l].dir;
-        this.cars.push({ x: dir > 0 ? -CAR_LEN - 10 : W + 10, lane: l, paint: pick(), v: SPEED });
+        this.cars.push({ x: dir > 0 ? -CAR_LEN * LANES[l].s - 10 : W + 10, lane: l, paint: pick(), v: SPEED });
       }
     }
     for (const l of [0, 1] as const) {
       const dir = LANES[l].dir;
+      const length = CAR_LEN * LANES[l].s;
       // front-most first
       const lane = this.cars.filter(c => c.lane === l).sort((a, b) => (b.x - a.x) * dir);
       let limit = Infinity; // how far (in travel direction) the front of this car may go
       for (const c of lane) {
-        const front = dir > 0 ? c.x + CAR_LEN : W - c.x;
+        const front = dir > 0 ? c.x + length : W - c.x;
         const stopLine = dir > 0 ? ZEBRA_L - 6 : W - (ZEBRA_R + 6);
         let target = SPEED;
         if (this.green && front <= stopLine + 2) limit = Math.min(limit, stopLine);
@@ -83,10 +84,10 @@ export class Crossing implements Micro {
         const move = Math.min(c.v * dt, Math.max(0, limit - front));
         c.x += move * dir;
         const newFront = front + move;
-        limit = newFront - CAR_LEN - GAP;
+        limit = newFront - length - GAP;
       }
     }
-    this.cars = this.cars.filter(c => c.x > -CAR_LEN - 40 && c.x < W + 40);
+    this.cars = this.cars.filter(c => c.x > -CAR_LEN * LANES[c.lane].s - 40 && c.x < W + 40);
   }
 
   down(): void {
@@ -110,7 +111,8 @@ export class Crossing implements Micro {
     // Bayraa walks up the crossing; on a red tap he only gets one step out before the screech.
     const k = this.crashed ? Math.min(this.walk, 0.12) : this.walk;
     const by = START_Y + (END_Y - START_Y) * k;
-    const bs = 1 - 0.3 * k;
+    // Follow the ground depth: a readable foreground child recedes toward the far pavement.
+    const bs = 1.45 - 0.7 * k;
     const bob = this.walking && !this.dead && !reduce ? Math.abs(Math.sin(clock.t * 12)) * -3 : 0;
 
     const items: Array<[number, () => void]> = [];
@@ -128,7 +130,7 @@ export class Crossing implements Micro {
 
     if (this.crashed) {
       // a car skids in
-      drawCar({ x: 70, lane: 1, paint: CAR_PAINTS[1], v: 0 }, LANES[1].y + 20, 1.05, 1, true);
+      drawCar({ x: 20, lane: 1, paint: CAR_PAINTS[1], v: 0 }, LANES[1].y + 20, LANES[1].s, 1, true);
       if (this.hit > 0) { ctx.fillStyle = `rgba(255,255,255,${this.hit})`; ctx.fillRect(0, 0, W, H); }
       text('ДУУТ!', 230, 470, 26, '#fff', { stroke: C.red, sw: 7, drop: true });
     }

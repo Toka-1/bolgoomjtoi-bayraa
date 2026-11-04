@@ -7,6 +7,10 @@ import { snowfall, sun, ridge, hills, mottle, puffSprite, drawPuff } from '../ar
 import type { Micro } from './types';
 import { DragKeys } from '../core/dragKeys';
 
+// Keep the drawn hat brim, hint and drop target on the same head anchor.
+const AVATAR = { x: 180, y: 600, scale: 1.65 };
+const HEAD_Y = AVATAR.y - 101 * AVATAR.scale;
+
 export class Hat implements Micro {
   readonly cmd = 'МАЛГАЙГАА ӨМС!';
   readonly sub = 'Лоовуузыг толгой руу нь чир';
@@ -38,9 +42,9 @@ export class Hat implements Micro {
   up(): void {
     if (!this.drag) return;
     this.drag = false;
-    if (dist(this.hx, this.hy, 180, 469) < 55) { this.on = true; ctl.win(); }
+    if (dist(this.hx, this.hy, AVATAR.x, HEAD_Y) < 55) { this.on = true; ctl.win(); }
   }
-  hint(): void { if (!this.on && !this.drag) gesture(this.hx, this.hy - 14, 180, 455, 45); }
+  hint(): void { if (!this.on && !this.drag) gesture(this.hx, this.hy - 14, AVATAR.x, HEAD_Y - 14, 45); }
   draw(): void {
     layer('hat-steppe', paintSteppe);
     const cold = this.on ? 0 : ctl.playing ? ctl.frac : this.dead ? 1 : 0;
@@ -49,16 +53,16 @@ export class Hat implements Micro {
     const img = puffSprite('255,255,255'), t = clock.t;
     for (let i = 0; i < 4; i++) {
       const p = (t * 0.7 + i / 4) % 1;
-      drawPuff(img, 186 + p * 40, 499 - p * 26, 5 + p * 16, 0.6 * (1 - p));
+      drawPuff(img, AVATAR.x + 8 + p * 40, AVATAR.y - 77 * AVATAR.scale - p * 26, 5 + p * 16, 0.6 * (1 - p));
     }
-    bayraa(180, 600, 1.3, { hat: this.on ? 'winter' : false, shiver: !this.on, frozen, mood: this.dead ? 'dead' : this.on ? 'happy' : 'scared' });
+    bayraa(AVATAR.x, AVATAR.y, AVATAR.scale, { hat: this.on ? 'winter' : false, shiver: !this.on, frozen, mood: this.dead ? 'dead' : this.on ? 'happy' : 'scared' });
     if (!this.on) {
       if (this.drag) {
         ctx.strokeStyle = C.gold; ctx.lineWidth = 3; ctx.setLineDash([6, 5]);
-        ctx.beginPath(); ctx.arc(180, 469, 55, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+        ctx.beginPath(); ctx.arc(AVATAR.x, HEAD_Y, 55, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
       }
       if (this.drag) { ctx.fillStyle = 'rgba(10,20,40,.18)'; circ(this.hx + 6, this.hy + 16, 24); }
-      winterHat(this.hx, this.hy, this.drag ? 1.45 : 1.3);
+      winterHat(this.hx, this.hy, AVATAR.scale);
     }
     snowfall(0.95);
     // frost creeping in from the edges

@@ -66,7 +66,7 @@ export class Baby implements Micro {
       for (let y = 0; y < 50; y += 5) ctx.lineTo(62 + i * 30 + Math.sin(y / 6 + clock.t * 8) * 4, 430 - y);
       ctx.stroke();
     }
-    bayraa(205, 498, 0.72, { mood: this.dead || !this.safe ? 'scared' : 'happy', arms: this.dead ? 1 : 0 });
+    bayraa(185, 552, 1.5, { mood: this.dead || !this.safe ? 'scared' : 'happy', arms: this.dead ? 1 : 0 });
     const crawl = this.drag || this.safe || reduce ? 0 : Math.sin(clock.t * 10) * 2;
     if (this.drag) shadow(this.bx + 4, Math.max(this.by + 30, 560), 30, 5, 0.2);
     baby(this.bx, this.by, crawl, !this.drag && !this.safe);

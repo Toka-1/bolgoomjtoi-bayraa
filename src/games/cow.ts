@@ -8,6 +8,7 @@ import { sun, cloud, ridge, hills, grass, mottle } from '../art/scenery';
 import type { Micro } from './types';
 
 const CAR_Y = 466;
+const COW_X = 210, COW_SCALE = 0.62;
 
 export class Cow implements Micro {
   readonly cmd = 'МАЛЫГ ХҮЛЭЭ!';
@@ -28,7 +29,7 @@ export class Cow implements Micro {
     const target = this.hold ? 0 : 100;
     this.v = Math.max(0, Math.min(100, this.v + (target > this.v ? 260 : -600) * dt));
     this.cx += this.v * dt;
-    if (this.cowY > 405 && this.cowY < 495 && this.cx + 78 > 176 && this.cx < 244) { this.dead = true; ctl.lose('Үхэр мөргөчихлөө!'); }
+    if (this.cowY > CAR_Y - 35 && this.cowY < CAR_Y + 50 && this.cx + 78 > COW_X - 34 * COW_SCALE && this.cx < COW_X + 65 * COW_SCALE) { this.dead = true; ctl.lose('Үхэр мөргөчихлөө!'); }
     if (this.cx + 78 >= 335) ctl.win();
   }
   down(): void { this.pointerHold = true; this.syncBrake(); }
@@ -46,7 +47,7 @@ export class Cow implements Micro {
     flag(345, 380);
     const shake = this.dead && !reduce ? Math.sin(clock.t * 50) * 2 : 0;
     const drawCar = () => car(this.cx, CAR_Y, this.hold, shake);
-    if (this.cowY < 440) { cow(210, this.cowY, 0.9); drawCar(); } else { drawCar(); cow(210, this.cowY, 0.9); }
+    if (this.cowY < CAR_Y) { cow(COW_X, this.cowY, COW_SCALE); drawCar(); } else { drawCar(); cow(COW_X, this.cowY, COW_SCALE); }
     if (this.hold && !this.dead) text('ЗОГСОЖ БАЙНА', 180, 540, 18, '#fff', { stroke: C.ink, sw: 5, drop: true });
   }
 }

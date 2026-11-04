@@ -25,13 +25,13 @@ export class Socket implements Micro {
     if (isDown && (k === 'Enter' || k === ' ')) this.down(250, 300);
   }
   down(x: number, y: number): void {
-    if (dist(x, y, 250, 300) < 60 || dist(x, y, 120, 478) < 55) { this.zap = 0.7; this.dead = true; sfx('zap'); ctl.lose(this.lose); }
+    if (dist(x, y, 250, 300) < 40 || dist(x, y, 120, 550) < 40) { this.zap = 0.7; this.dead = true; sfx('zap'); ctl.lose(this.lose); }
   }
   draw(): void {
     layer('socket-room', paintRoom);
     const glint = reduce ? 0.6 : (Math.sin(clock.t * 6) + 1) / 2;
-    sparkle(150, 462, 3 + glint * 5, glint);
-    bayraa(250, 590, 1.1, { mood: this.dead ? 'dead' : 'ok', arms: this.dead ? 1 : 0 });
+    sparkle(140, 540, 3 + glint * 5, glint);
+    bayraa(265, 590, 1.65, { mood: this.dead ? 'dead' : 'ok', arms: this.dead ? 1 : 0 });
     if (!this.dead) {
       shadow(115, 382, 70, 6, 0.15);
       ctx.fillStyle = '#fff';
@@ -85,6 +85,7 @@ function paintRoom(): void {
   skirting(500);
   planks(500, H, 180, 15, '#c48e5c', '#86592f');
   // socket plate
+  ctx.save(); ctx.translate(250, 300); ctx.scale(0.6, 0.6); ctx.translate(-250, -300);
   shadow(253, 337, 40, 6, 0.25);
   ctx.fillStyle = 'rgba(30,50,40,.25)'; rr(218, 269, 70, 70, 12);
   ctx.fillStyle = lin(215, 265, 285, 335, [[0, '#ffffff'], [1, '#d9dde2']]); rr(215, 265, 70, 70, 12);
@@ -93,8 +94,9 @@ function paintRoom(): void {
   ctx.strokeStyle = 'rgba(0,0,0,.12)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(250, 300, 21, 0, Math.PI * 2); ctx.stroke();
   for (const hx of [240, 260]) { ctx.fillStyle = '#1c1f26'; circ(hx, 300, 3.6); ctx.fillStyle = 'rgba(255,255,255,.5)'; circ(hx + 0.8, 301.6, 1); }
   text('220V', 250, 350, 12, '#5b6b60', { w: 700 });
+  ctx.restore();
   // fork lying on the floor
-  ctx.save(); ctx.translate(120, 478); ctx.rotate(-0.4);
+  ctx.save(); ctx.translate(120, 550); ctx.scale(0.65, 0.65); ctx.rotate(-0.4);
   ctx.fillStyle = 'rgba(30,15,5,.35)'; ell(2, 7, 44, 5);
   ctx.lineCap = 'round';
   ctx.strokeStyle = lin(0, -4, 0, 4, [[0, '#f2f4f7'], [0.5, '#a3abb5'], [1, '#5c636d']]);
@@ -105,8 +107,8 @@ function paintRoom(): void {
   ctx.restore();
   // a power cable running along the skirting
   ctx.strokeStyle = '#f4f4f4'; ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.moveTo(278, 334); ctx.bezierCurveTo(300, 420, 320, 470, W + 10, 492); ctx.stroke();
-  ctx.strokeStyle = 'rgba(0,0,0,.15)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(279.5, 334); ctx.bezierCurveTo(301.5, 420, 321, 471, W + 10, 494); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(267, 320); ctx.bezierCurveTo(300, 420, 320, 470, W + 10, 492); ctx.stroke();
+  ctx.strokeStyle = 'rgba(0,0,0,.15)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(268.5, 320); ctx.bezierCurveTo(301.5, 420, 321, 471, W + 10, 494); ctx.stroke();
   const r = rng(3);
   ctx.fillStyle = 'rgba(255,255,255,.15)'; for (let i = 0; i < 20; i++) circ(r(0, W), r(520, H), r(0.5, 1.2));
 }

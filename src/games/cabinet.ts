@@ -117,17 +117,17 @@ export class Cabinet implements Micro {
       ctx.strokeRect(CAB.x + 4, CAB.y + 4, CAB.w - 8, CAB.h - 8); ctx.setLineDash([]);
     }
     const danger = this.dead || this.items.some(it => !it.stored && dist(it.x, it.y, this.bx, this.by) < 90);
-    bayraa(118, 430, 0.68, { mood: this.stored === 3 ? 'happy' : danger ? 'scared' : 'ok', arms: danger ? 1 : 0 });
+    bayraa(112, 470, 1.5, { mood: this.stored === 3 ? 'happy' : danger ? 'scared' : 'ok', arms: danger ? 1 : 0 });
     // floor items, back to front, then the toddler
     const floor = this.items.filter((it, i) => !it.stored && i !== this.drag && it !== this.grabbed).sort((a, b) => a.y - b.y);
-    for (const it of floor) { shadow(it.x, it.y + 11, 19, 5, 0.3); item(it.kind, it.x, it.y, 1.45); }
+    for (const it of floor) { shadow(it.x, it.y + 8, 14, 4, 0.3); item(it.kind, it.x, it.y, 0.95); }
     const crawl = this.dead || reduce ? 0 : Math.sin(clock.t * 10) * 2;
     baby(this.bx + 16, this.by, crawl);
     if (this.grabbed) item(this.grabbed.kind, this.bx - 8, this.by - 6, 1.1, -0.4);
     if (this.drag >= 0) {
       const it = this.items[this.drag];
       ctx.fillStyle = 'rgba(10,20,40,.18)'; ell(it.x + 6, it.y + 16, 18, 6);
-      item(it.kind, it.x, it.y, 1.7);
+      item(it.kind, it.x, it.y, 1.15);
     }
     if (this.dead) { ctx.fillStyle = 'rgba(229,51,42,.18)'; ctx.fillRect(0, 0, W, H); }
   }

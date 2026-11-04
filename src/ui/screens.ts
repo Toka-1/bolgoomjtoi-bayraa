@@ -134,12 +134,12 @@ function paintTitle(): void {
   hills(470, 8, 0.025, 0.5, [[0, '#a6d468'], [1, '#86bb4a']]);
   hills(505, 6, 0.04, 2, [[0, '#8fc653'], [1, '#5f9a2f']]);
   grass(500, H, 140, 5, 'rgba(50,95,20,.7)', 'rgba(190,230,120,.7)');
-  ger(90, 500, 1.05);
+  ger(75, 505, 2.1);
 }
 
 function drawTitle(): void {
   layer('title', paintTitle);
-  chimneySmoke(112, 386, 1);
+  chimneySmoke(120, 278, 1.4);
   const t = clock.t;
   if (!reduce) {
     ctx.strokeStyle = 'rgba(27,31,59,.6)'; ctx.lineWidth = 1.8; ctx.lineCap = 'round';
