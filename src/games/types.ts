@@ -13,6 +13,8 @@ export interface Micro {
   init(): void;
   update(dt: number): void;
   draw(): void;
+  /** Optional demonstration overlay, shown only during first-time practice. */
+  hint?(): void;
   down?(x: number, y: number): void;
   move?(x: number, y: number): void;
   up?(x: number, y: number): void;

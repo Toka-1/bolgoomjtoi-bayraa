@@ -5,7 +5,7 @@ import './style.css';
 import { cv, view, clock, resize, beginFrame } from './core/canvas';
 import { C } from './core/draw';
 import { unlockAudio } from './core/audio';
-import { g, startRun, afterResult, step, debugStart } from './flow';
+import { g, startRun, afterResult, step, debugStart, beginPractice } from './flow';
 import { render, AGAIN_BTN, inBtn } from './ui/screens';
 
 addEventListener('resize', resize);
@@ -22,6 +22,7 @@ function pt(e: PointerEvent): [number, number] {
 function press(x: number, y: number): void {
   if (g.state === 'title') startRun();
   else if (g.state === 'over') { if (g.st > 0.6 && inBtn(AGAIN_BTN, x, y)) startRun(); }
+  else if (g.state === 'intro' && g.practice) beginPractice();
   else if (g.state === 'play') g.game.down?.(x, y);
   else if (g.state === 'result' && !g.ok && g.st > 0.8) afterResult();
 }
@@ -40,6 +41,8 @@ addEventListener('keydown', e => {
   if (e.repeat) return;
   unlockAudio();
   if ((e.key === 'Enter' || e.key === ' ') && (g.state === 'title' || (g.state === 'over' && g.st > 0.6))) { e.preventDefault(); startRun(); return; }
+  if ((e.key === 'Enter' || e.key === ' ') && g.state === 'intro' && g.practice) { e.preventDefault(); beginPractice(); return; }
+  if ((e.key === 'Enter' || e.key === ' ') && g.state === 'result' && !g.ok && g.st > 0.8) { e.preventDefault(); afterResult(); return; }
   if (g.state === 'play' && g.game.key) { e.preventDefault(); g.game.key(e.key, true); }
 });
 addEventListener('keyup', e => { if (g.state !== 'title') g.game.key?.(e.key, false); });
