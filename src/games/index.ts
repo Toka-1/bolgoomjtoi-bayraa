@@ -5,6 +5,7 @@ import { Socket } from './socket';
 import { Hat } from './hat';
 import { Cow } from './cow';
 import { Baby } from './baby';
+import { Crossing } from './crossing';
 
-export const games: Micro[] = [new Smoke(), new Ice(), new Socket(), new Hat(), new Cow(), new Baby()];
+export const games: Micro[] = [new Smoke(), new Ice(), new Socket(), new Hat(), new Cow(), new Baby(), new Crossing()];
 export type { Micro };

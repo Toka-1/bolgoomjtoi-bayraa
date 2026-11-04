@@ -5,8 +5,8 @@ import './style.css';
 import { cv, view, clock, resize, beginFrame } from './core/canvas';
 import { C } from './core/draw';
 import { unlockAudio } from './core/audio';
-import { g, startRun, afterResult, step, debugStart } from './flow';
-import { render, AGAIN_BTN, inBtn } from './ui/screens';
+import { g, startRun, afterResult, step, debugStart, goHome } from './flow';
+import { render, AGAIN_BTN, HOME_BTN, inBtn, inHudHome } from './ui/screens';
 
 addEventListener('resize', resize);
 resize();
@@ -21,7 +21,11 @@ function pt(e: PointerEvent): [number, number] {
 }
 function press(x: number, y: number): void {
   if (g.state === 'title') startRun();
-  else if (g.state === 'over') { if (g.st > 0.6 && inBtn(AGAIN_BTN, x, y)) startRun(); }
+  else if (g.state === 'over') {
+    if (g.st > 0.6 && inBtn(AGAIN_BTN, x, y)) startRun();
+    else if (g.st > 0.6 && inBtn(HOME_BTN, x, y)) goHome();
+  }
+  else if (inHudHome(x, y)) goHome();
   else if (g.state === 'play') g.game.down?.(x, y);
   else if (g.state === 'result' && !g.ok && g.st > 0.8) afterResult();
 }
@@ -39,6 +43,7 @@ cv.addEventListener('pointercancel', release);
 addEventListener('keydown', e => {
   if (e.repeat) return;
   unlockAudio();
+  if (e.key === 'Escape' && g.state !== 'title') { e.preventDefault(); goHome(); return; }
   if ((e.key === 'Enter' || e.key === ' ') && (g.state === 'title' || (g.state === 'over' && g.st > 0.6))) { e.preventDefault(); startRun(); return; }
   if (g.state === 'play' && g.game.key) { e.preventDefault(); g.game.key(e.key, true); }
 });
@@ -56,7 +61,12 @@ function frame(now: number): void {
 }
 if (import.meta.env.DEV) {
   const q = new URLSearchParams(location.search).get('g');
-  if (q !== null) debugStart(Number(q));
+  if (q !== null) {
+    debugStart(Number(q));
+    // ?t=N fast-forwards N seconds of game time (for screenshots)
+    const ff = Number(new URLSearchParams(location.search).get('t')) || 0;
+    for (let i = 0; i < ff * 60; i++) { clock.t += 1 / 60; step(1 / 60); }
+  }
 }
 cv.focus();
 requestAnimationFrame(frame);
