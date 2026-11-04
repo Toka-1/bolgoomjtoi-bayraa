@@ -1,3 +1,4 @@
+import { gesture } from '../ui/gesture';
 import { ctx, W, H, layer } from '../core/canvas';
 import { lin, rad, ell, seg, rr, circ } from '../core/draw';
 import { ctl } from '../core/ctl';
@@ -43,6 +44,7 @@ export class Ice implements Micro {
     if (k === 'ArrowLeft') this.lane = Math.max(0, this.lane - 1);
     if (k === 'ArrowRight') this.lane = Math.min(2, this.lane + 1);
   }
+  hint(): void { gesture(180, 550, 80, 550, 30); }
   draw(): void {
     layer('ice-city', paintCity);
     chimneySmoke(192, 18, 0.8, '200,200,208', 0.5);
