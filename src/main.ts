@@ -5,7 +5,7 @@ import './style.css';
 import { cv, view, clock, resize, beginFrame } from './core/canvas';
 import { C } from './core/draw';
 import { unlockAudio } from './core/audio';
-import { g, startRun, afterResult, step, debugStart, goHome } from './flow';
+import { g, startRun, afterResult, step, debugStart, beginPractice, goHome } from './flow';
 import { render, AGAIN_BTN, HOME_BTN, inBtn, inHudHome } from './ui/screens';
 
 addEventListener('resize', resize);
@@ -26,6 +26,7 @@ function press(x: number, y: number): void {
     else if (g.st > 0.6 && inBtn(HOME_BTN, x, y)) goHome();
   }
   else if (inHudHome(x, y)) goHome();
+  else if (g.state === 'intro' && g.practice) beginPractice();
   else if (g.state === 'play') g.game.down?.(x, y);
   else if (g.state === 'result' && !g.ok && g.st > 0.8) afterResult();
 }
@@ -45,6 +46,8 @@ addEventListener('keydown', e => {
   unlockAudio();
   if (e.key === 'Escape' && g.state !== 'title') { e.preventDefault(); goHome(); return; }
   if ((e.key === 'Enter' || e.key === ' ') && (g.state === 'title' || (g.state === 'over' && g.st > 0.6))) { e.preventDefault(); startRun(); return; }
+  if ((e.key === 'Enter' || e.key === ' ') && g.state === 'intro' && g.practice) { e.preventDefault(); beginPractice(); return; }
+  if ((e.key === 'Enter' || e.key === ' ') && g.state === 'result' && !g.ok && g.st > 0.8) { e.preventDefault(); afterResult(); return; }
   if (g.state === 'play' && g.game.key) { e.preventDefault(); g.game.key(e.key, true); }
 });
 addEventListener('keyup', e => { if (g.state !== 'title') g.game.key?.(e.key, false); });

@@ -86,10 +86,20 @@ function drawIntro(): void {
   text(g.game.cmd, 0, -14, size, C.ink);
   text(g.game.sub, 0, 30, 15, C.ink, { w: 500 });
   ctx.restore();
+  if (g.practice) {
+    text('ДАДЛАГА', W / 2, 200, 26, '#fff', { stroke: C.ink, sw: 5 });
+    text('Амь, оноо өөрчлөгдөхгүй', W / 2, 410, 17, '#fff', { w: 500 });
+    text('Дарж эхлэх · Enter', W / 2, 455, 19, '#fff');
+  }
   if (g.faster) text('ХУРДАН!', W / 2, 200, 36, C.red, { stroke: '#fff', sw: 8, drop: true });
 }
 
 function drawPlay(): void {
+  if (g.practice) {
+    text('ДАДЛАГА · Амь хасагдахгүй', W / 2, 112, 14, C.gold, { stroke: C.ink, sw: 4 });
+    text(g.game.sub, W / 2, 585, 15, '#fff', { stroke: C.ink, sw: 4 });
+    g.game.hint?.();
+  }
   text(g.game.cmd, W / 2, 84, 18, '#fff', { stroke: C.ink, sw: 5, drop: true });
   const f = 1 - g.frac, bw = W - 32;
   ctx.fillStyle = 'rgba(27,31,59,.5)'; rr(16, 616, bw, 12, 6);
@@ -108,10 +118,11 @@ function drawResult(): void {
     const size = g.winText.length > 8 ? 34 : 54;
     text(g.winText, 0, 0, size, goldFace(-size / 2, size / 2), { stroke: C.ink, sw: 10, drop: true });
     ctx.restore();
+    if (g.practice) text('Одоо оноотой тоглоё!', W / 2, 300, 19, '#fff', { stroke: C.ink, sw: 4 });
     return;
   }
   ctx.fillStyle = 'rgba(27,31,59,.62)'; ctx.fillRect(0, 0, W, H);
-  text('ӨӨ, ҮГҮЙ!', W / 2, 190, 46, '#fff', { stroke: C.red, sw: 10, drop: true });
+  text(g.practice ? 'ДАХИАД ОРОЛДЪЁ!' : 'ӨӨ, ҮГҮЙ!', W / 2, 190, g.practice ? 30 : 46, '#fff', { stroke: C.red, sw: 10, drop: true });
   text(g.msg, W / 2, 250, 22, '#fff', { w: 700 });
   panel(28, 300, W - 56, 170, 18, lin(0, 300, 0, 470, [[0, '#ffffff'], [1, '#eef0f6']]), 'rgba(27,31,59,.0)');
   text('Санаж яваарай', W / 2, 330, 16, C.red);

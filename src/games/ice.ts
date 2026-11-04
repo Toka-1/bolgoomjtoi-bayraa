@@ -1,3 +1,4 @@
+import { gesture } from '../ui/gesture';
 import { ctx, W, H, reduce, layer } from '../core/canvas';
 import { lin, rad, ell, seg, rr, circ, text, C } from '../core/draw';
 import { ctl } from '../core/ctl';
@@ -62,6 +63,8 @@ export class Ice implements Micro {
     if (k === 'ArrowLeft') this.nudge(-1);
     if (k === 'ArrowRight') this.nudge(1);
   }
+  /** Point at the side to tap: opposite the lean. */
+  hint(): void { if (!this.dead) { const x = this.a > 0 ? 70 : W - 70; gesture(x, 400, x, 400, 36); } }
   draw(): void {
     layer('ice-city', paintCity);
     chimneySmoke(192, 18, 0.8, '200,200,208', 0.5);

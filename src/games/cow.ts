@@ -1,3 +1,4 @@
+import { gesture } from '../ui/gesture';
 import { ctx, W, H, clock, reduce, layer } from '../core/canvas';
 import { lin, rad, rr, seg, text, C, circ } from '../core/draw';
 import { ctl } from '../core/ctl';
@@ -30,6 +31,7 @@ export class Cow implements Micro {
   down(): void { this.hold = true; }
   up(): void { this.hold = false; }
   key(k: string, isDown: boolean): void { if (k === ' ' || k === 'ArrowDown') this.hold = isDown; }
+  hint(): void { if (!this.hold) gesture(180, 550, 180, 550, 30); }
   draw(): void {
     layer('cow-road', paintRoad);
     flag(345, 380);
