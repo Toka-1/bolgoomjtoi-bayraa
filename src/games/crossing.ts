@@ -2,6 +2,7 @@ import { gesture } from '../ui/gesture';
 import { ctx, W, H, clock, reduce, layer } from '../core/canvas';
 import { lin, rad, rr, circ, seg, text, rand, glow, C } from '../core/draw';
 import { ctl } from '../core/ctl';
+import { sfx } from '../core/audio';
 import { rng } from '../core/rng';
 import { bayraa } from '../art/bayraa';
 import { car, CAR_PAINTS, type CarPaint } from '../art/props';
@@ -92,7 +93,7 @@ export class Crossing implements Micro {
     if (this.walking || this.dead) return;
     this.walking = true;
     if (this.green) ctl.win();
-    else { this.dead = true; this.crashed = true; this.hit = 0.5; ctl.lose('Машин мөргөчихлөө!'); }
+    else { this.dead = true; this.crashed = true; this.hit = 0.5; sfx('horn'); ctl.lose('Машин мөргөчихлөө!'); }
   }
   /** Only show where to tap once it is actually safe. */
   hint(): void {

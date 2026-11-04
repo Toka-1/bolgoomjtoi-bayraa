@@ -1,10 +1,10 @@
 import { cv, view } from './canvas';
 import { unlockAudio } from './audio';
 import { g, startRun, afterResult, beginPractice, goHome } from '../flow';
-import { AGAIN_BTN, HOME_BTN, inBtn, inHudHome } from '../ui/screens';
+import { uiPress, uiKey } from '../ui/meta';
 import type { Micro } from '../games';
 
-const CONTROL_KEYS = new Set(['Enter', ' ', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Escape']);
+const CONTROL_KEYS = new Set(['Enter', ' ', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Escape', '1', '2', '3']);
 
 export function installInput(): () => void {
   let pointer: number | null = null;
@@ -41,14 +41,8 @@ export function installInput(): () => void {
     const [x, y] = point(e);
     if (x < 0 || x > 360 || y < 0 || y > 640) return;
     clear();
-    if (g.state === 'title') { startRun(); return; }
-    if (g.state === 'over') {
-      if (g.st > 0.6 && inBtn(AGAIN_BTN, x, y)) startRun();
-      else if (g.st > 0.6 && inBtn(HOME_BTN, x, y)) goHome();
-      return;
-    }
-    if (inHudHome(x, y)) { goHome(); return; }
-    if (g.state === 'intro') { if (g.practice) beginPractice(); return; }
+    // menus, HUD buttons and practice start are handled by the UI layer
+    if (uiPress(x, y)) return;
     if (g.state === 'result') { if (!g.ok && g.st > 0.8) afterResult(); return; }
     if (g.state !== 'play') return;
     pointer = e.pointerId; claim();
@@ -87,6 +81,7 @@ export function installInput(): () => void {
     }
     if (pointer !== null) return;
     unlockAudio();
+    if (uiKey(e.key)) return;
     const activate = e.key === 'Enter' || e.key === ' ';
     if (activate && (g.state === 'title' || (g.state === 'over' && g.st > 0.6))) { clear(); startRun(); return; }
     if (activate && g.state === 'intro' && g.practice) { clear(); beginPractice(); return; }

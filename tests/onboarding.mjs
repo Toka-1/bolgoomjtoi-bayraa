@@ -12,6 +12,7 @@ function setup(saved = '[]', blocked = false) {
   const game = { cmd: 'test-game', lose: 'try again', dead: false, init() {}, update() { updates++; } };
   const flow = runInNewContext(source + '\n({ g, startRun, beginPractice, step, afterResult });', {
     ctl, games: [game], sfx() {}, navigator: {},
+    meta: { unlock() { return false; }, allowed() { return true; }, quiz() { return []; } },
     localStorage: {
       getItem(key) { if (blocked) throw Error('blocked'); return storage.get(key) ?? null; },
       setItem(key, value) { if (blocked) throw Error('blocked'); storage.set(key, value); },

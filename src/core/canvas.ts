@@ -66,3 +66,22 @@ export function sprite(key: string, w: number, h: number, paint: (c: CanvasRende
   }
   return c;
 }
+
+/** Render `paint` (in game coordinates) once into a scaled-down canvas, e.g. a card thumbnail. */
+const snaps = new Map<string, HTMLCanvasElement>();
+export function snapshot(key: string, s: number, paint: () => void): HTMLCanvasElement {
+  let c = snaps.get(key);
+  if (!c) {
+    const k = Math.min(2, Math.max(1, Math.ceil(view.dpr * view.scale)));
+    c = document.createElement('canvas');
+    c.width = Math.ceil(W * s * k); c.height = Math.ceil(H * s * k);
+    const bx = c.getContext('2d')!;
+    bx.scale(s * k, s * k);
+    bx.beginPath(); bx.rect(0, 0, W, H); bx.clip();
+    const prev = ctx;
+    ctx = bx;
+    try { paint(); } finally { ctx = prev; }
+    snaps.set(key, c);
+  }
+  return c;
+}

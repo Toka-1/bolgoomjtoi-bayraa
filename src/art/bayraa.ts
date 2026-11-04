@@ -1,11 +1,13 @@
 import { ctx, clock, reduce } from '../core/canvas';
 import { C, lin, rad, circ, ell, seg, rr, shadow } from '../core/draw';
 import { rng } from '../core/rng';
+import { look } from './look';
 
 export type Mood = 'ok' | 'dead' | 'scared' | 'happy';
 export interface BayraaOpts {
   rot?: number; shiver?: boolean; frozen?: boolean; green?: boolean;
-  mood?: Mood; arms?: number; wave?: boolean; hat?: boolean; noShadow?: boolean;
+  mood?: Mood; arms?: number; wave?: boolean; /** true = festive hat, 'winter' = fox-fur лоовууз with ear flaps */
+  hat?: boolean | 'winter'; noShadow?: boolean;
 }
 
 type Skin = readonly [string, string, string];
@@ -24,7 +26,7 @@ export function bayraa(x: number, y: number, s = 1, o: BayraaOpts = {}): void {
 
   const pal = o.frozen
     ? { lt: '#cdeafc', md: '#8fc7ef', dk: '#5b98c6', trim: '#f2fbff', cuff: '#b8dcf3' }
-    : { lt: '#5a8cf0', md: C.deel, dk: '#142f78', trim: C.gold, cuff: C.sash };
+    : look.outfit;
   const skin = o.frozen ? SKIN_FROZEN : o.green ? SKIN_SICK : SKIN;
 
   boot(-1); boot(1);
@@ -98,7 +100,8 @@ export function bayraa(x: number, y: number, s = 1, o: BayraaOpts = {}): void {
     const r = rng(3);
     for (let i = 0; i < 9; i++) circ(r(-20, 20), r(-108, -66), r(0.8, 1.8));
   }
-  if (o.hat) mongolHat(0, -101, 1);
+  if (o.hat === 'winter') winterHat(0, -101, 1);
+  else if (o.hat) mongolHat(0, -101, 1);
   ctx.restore();
 
   function boot(d: number): void {
@@ -198,5 +201,55 @@ export function mongolHat(x: number, y: number, s: number): void {
   // knot (дэнс)
   ctx.fillStyle = rad(0, -37, 6, [[0, '#fff3b8'], [0.4, C.gold], [1, '#9a6600']], -2, -39);
   circ(0, -37, 5.5);
+  ctx.restore();
+}
+
+/**
+ * Winter лоовууз: fox-fur band and ear flaps under a red cloth crown.
+ * (x, y) is the bottom of the fur band, same anchor as mongolHat; the flaps hang down over the ears.
+ */
+export function winterHat(x: number, y: number, s: number): void {
+  const sway = reduce ? 0 : Math.sin(clock.t * 2.5) * 1.2;
+  const fox = (y0: number, y1: number) => lin(0, y0, 0, y1, [[0, '#e8a860'], [0.45, '#c47a3a'], [1, '#7a4420']]);
+  const fur = (x0: number, x1: number, y0: number, y1: number, seed: number, n: number) => {
+    const r = rng(seed);
+    ctx.lineWidth = 1.1;
+    for (let i = 0; i < n; i++) {
+      const fx = r(x0, x1), fy = r(y0, y1);
+      ctx.strokeStyle = i % 3 ? 'rgba(255,236,205,.4)' : 'rgba(60,28,8,.35)';
+      seg(fx, fy, fx + r(-1.8, 1.8), fy + r(2, 5));
+    }
+  };
+  ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+  // ear flaps, with ties
+  for (const d of [-1, 1]) {
+    ctx.save(); ctx.scale(d, 1);
+    ctx.beginPath();
+    ctx.moveTo(13, -4); ctx.lineTo(27, -4);
+    ctx.quadraticCurveTo(30, 12, 26 + sway * d * 0.3, 26);
+    ctx.quadraticCurveTo(19, 31, 13, 25);
+    ctx.quadraticCurveTo(11, 10, 13, -4); ctx.closePath();
+    ctx.fillStyle = fox(-4, 30); ctx.fill();
+    ctx.strokeStyle = 'rgba(80,40,12,.35)'; ctx.lineWidth = 1.2; ctx.stroke();
+    fur(14, 26, -2, 24, 21, 18);
+    ctx.strokeStyle = '#a3170f'; ctx.lineWidth = 1.6; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(19, 27); ctx.quadraticCurveTo(18 + sway, 34, 16 + sway, 40); ctx.stroke();
+    ctx.restore();
+  }
+  // crown (red cloth, tall and rounded)
+  ctx.beginPath();
+  ctx.moveTo(-20, -10); ctx.quadraticCurveTo(-20, -38, 0, -44); ctx.quadraticCurveTo(20, -38, 20, -10); ctx.closePath();
+  ctx.fillStyle = lin(-20, 0, 20, 0, [[0, '#ff6a5c'], [0.45, C.red], [1, '#851209']]); ctx.fill();
+  ctx.strokeStyle = 'rgba(244,180,0,.9)'; ctx.lineWidth = 1.5;
+  seg(0, -41, 0, -12);
+  ctx.beginPath(); ctx.moveTo(-3, -41); ctx.quadraticCurveTo(-12, -30, -13, -12); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(3, -41); ctx.quadraticCurveTo(12, -30, 13, -12); ctx.stroke();
+  // thick fox-fur band
+  ctx.fillStyle = fox(-18, 4); rr(-29, -18, 58, 22, 11);
+  ctx.fillStyle = 'rgba(255,240,215,.35)'; rr(-25, -16, 50, 5, 3);
+  fur(-27, 27, -17, 0, 31, 46);
+  // knot (дэнс)
+  ctx.fillStyle = rad(0, -47, 6, [[0, '#fff3b8'], [0.4, C.gold], [1, '#9a6600']], -2, -49);
+  circ(0, -47, 5.5);
   ctx.restore();
 }
