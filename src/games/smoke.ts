@@ -11,7 +11,7 @@ const WX = 210, WY = 150, WW = 120, WH = 120;
 
 export class Smoke implements Micro {
   readonly cmd = 'ЦОНХОО НЭЭ!';
-  readonly sub = 'Өрөөнд утаа дүүрч байна';
+  readonly sub = 'Цонхон дээр дарж нээ';
   readonly lose = 'Угаартчихлаа…';
   readonly tip = 'Зуух түлж байхдаа салхивчаа онгорхой байлга. Толгой өвдөж, дотор муухайрвал даруй цэвэр агаарт гар.';
   dead = false;
@@ -23,8 +23,9 @@ export class Smoke implements Micro {
     this.smoke = this.open ? Math.max(0, this.smoke - dt * 1.5) : Math.min(1, this.smoke + dt * 0.2);
   }
   down(x: number, y: number): void {
-    if (!this.open && x > 200 && x < 340 && y > 140 && y < 280) { this.open = true; ctl.win(); }
+    if (!this.open && x >= WX && x <= WX + WW && y >= WY && y <= WY + WH) { this.open = true; ctl.win(); }
   }
+  resultUpdate(dt: number): void { if (this.open) this.smoke = Math.max(0, this.smoke - dt * 1.5); }
 
   hint(): void { if (!this.open) gesture(270, 210, 270, 210, 52); }
   draw(): void {

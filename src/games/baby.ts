@@ -7,6 +7,7 @@ import { bayraa } from '../art/bayraa';
 import { baby, cradle, stove, pipe } from '../art/props';
 import { mottle } from '../art/scenery';
 import type { Micro } from './types';
+import { DragKeys } from '../core/dragKeys';
 
 export class Baby implements Micro {
   readonly cmd = 'ХҮҮХДИЙГ ХАМГААЛ!';
@@ -14,15 +15,34 @@ export class Baby implements Micro {
   readonly lose = 'Түлэгдчихлээ!';
   readonly tip = 'Халуун зуухны дэргэд хүүхдийг ганцааранг нь бүү орхи. Зуухыг хашлагаар хамгаал.';
   dead = false;
+  readonly keys = 'Баруун товч: авах / тавих';
+  private arrows = new DragKeys();
   private bx = 290; private by = 545; private drag = false; private safe = false;
 
-  init(): void { this.bx = 290; this.by = 545; this.drag = false; this.safe = false; }
+  init(): void { this.bx = 290; this.by = 545; this.cancelInput(); this.safe = false; }
   update(dt: number): void {
+    if (this.drag) {
+      const [dx, dy] = this.arrows.delta(dt);
+      this.bx = Math.max(20, Math.min(W - 20, this.bx + dx));
+      this.by = Math.max(140, Math.min(H - 40, this.by + dy));
+    }
     if (this.drag || this.safe || this.dead) return;
     this.bx -= 30 * dt;
     if (this.bx < 150) { this.dead = true; ctl.lose(this.lose); }
   }
   down(x: number, y: number): void { if (!this.safe && !this.dead && dist(x, y, this.bx, this.by - 16) < 50) this.drag = true; }
+  cancelInput(): void {
+    if (this.drag && !this.safe) { this.by = 545; this.bx = Math.max(160, Math.min(330, this.bx)); }
+    this.drag = false; this.arrows.clear();
+  }
+  key(k: string, isDown: boolean): void {
+    this.arrows.key(k, isDown);
+  }
+  select(x: number, y: number): boolean {
+    if (this.safe || this.dead) return false;
+    if (this.drag) { this.move(x, y); this.up(); } else this.down(x, y);
+    return this.drag;
+  }
   move(x: number, y: number): void { if (this.drag) { this.bx = x; this.by = y + 16; } }
   up(): void {
     if (!this.drag) return;
@@ -33,6 +53,10 @@ export class Baby implements Micro {
   hint(): void { if (!this.safe && !this.drag) gesture(this.bx, this.by - 16, 290, 324, 48); }
   draw(): void {
     layer('baby-ger', paintGer);
+    if (this.drag) {
+      ctx.strokeStyle = C.gold; ctx.lineWidth = 3; ctx.setLineDash([6, 5]);
+      ctx.strokeRect(230, 260, 120, 140); ctx.setLineDash([]);
+    }
     pipe(84, 0, 444, 20);
     stove(40, 440, 110, 90);
     // heat shimmer

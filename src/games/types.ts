@@ -12,10 +12,17 @@ export interface Micro {
   dead: boolean;
   init(): void;
   update(dt: number): void;
+  /** Cosmetic changes only: no movement, collisions, or scoring. */
+  resultUpdate?(dt: number): void;
+  /** Clear held controls without completing a gesture. */
+  cancelInput?(): void;
+  readonly keys?: string;
   draw(): void;
   /** Optional demonstration overlay, shown only during first-time practice. */
   hint?(): void;
   down?(x: number, y: number): void;
+  /** Right-click toggles mouse selection; returns whether the object is held. */
+  select?(x: number, y: number): boolean;
   move?(x: number, y: number): void;
   up?(x: number, y: number): void;
   key?(k: string, isDown: boolean): void;

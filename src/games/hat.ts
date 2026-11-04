@@ -5,6 +5,7 @@ import { ctl } from '../core/ctl';
 import { bayraa, mongolHat } from '../art/bayraa';
 import { snowfall, sun, ridge, hills, mottle, puffSprite, drawPuff } from '../art/scenery';
 import type { Micro } from './types';
+import { DragKeys } from '../core/dragKeys';
 
 export class Hat implements Micro {
   readonly cmd = 'МАЛГАЙГАА ӨМС!';
@@ -12,10 +13,26 @@ export class Hat implements Micro {
   readonly lose = 'Хөлдчихлөө!';
   readonly tip = 'Хасах 40 градуст чих, хамар хамгийн түрүүнд хөлддөг. Малгай, бээлий, ороолтоо заавал өмс.';
   dead = false;
+  readonly keys = 'Баруун товч: авах / тавих';
+  private arrows = new DragKeys();
   private hx = 0; private hy = 0; private drag = false; private on = false;
 
-  init(): void { this.hx = rand(70, 290); this.hy = rand(220, 330); this.drag = false; this.on = false; }
-  update(): void {}
+  init(): void { this.hx = rand(70, 290); this.hy = rand(220, 330); this.cancelInput(); this.on = false; }
+  update(dt: number): void {
+    if (!this.drag) return;
+    const [dx, dy] = this.arrows.delta(dt);
+    this.hx = Math.max(20, Math.min(W - 20, this.hx + dx));
+    this.hy = Math.max(130, Math.min(H - 40, this.hy + dy));
+  }
+  cancelInput(): void { this.drag = false; this.arrows.clear(); }
+  key(k: string, isDown: boolean): void {
+    this.arrows.key(k, isDown);
+  }
+  select(x: number, y: number): boolean {
+    if (this.on || this.dead) return false;
+    if (this.drag) { this.move(x, y); this.up(); } else this.down(x, y);
+    return this.drag;
+  }
   down(x: number, y: number): void { if (!this.on && dist(x, y, this.hx, this.hy - 14) < 50) this.drag = true; }
   move(x: number, y: number): void { if (this.drag) { this.hx = x; this.hy = y + 14; } }
   up(): void {
@@ -36,6 +53,10 @@ export class Hat implements Micro {
     }
     bayraa(180, 600, 1.3, { hat: this.on, shiver: !this.on, frozen, mood: this.dead ? 'dead' : this.on ? 'happy' : 'scared' });
     if (!this.on) {
+      if (this.drag) {
+        ctx.strokeStyle = C.gold; ctx.lineWidth = 3; ctx.setLineDash([6, 5]);
+        ctx.beginPath(); ctx.arc(180, 469, 55, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+      }
       if (this.drag) { ctx.fillStyle = 'rgba(10,20,40,.18)'; circ(this.hx + 6, this.hy + 16, 24); }
       mongolHat(this.hx, this.hy, this.drag ? 1.45 : 1.3);
     }
