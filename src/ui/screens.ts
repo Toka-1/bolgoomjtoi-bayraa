@@ -71,9 +71,11 @@ function drawIntro(): void {
   text(g.game.sub, 0, 30, 15, C.ink, { w: 500 });
   ctx.restore();
   if (g.faster) text('ХУРДАН!', W / 2, 200, 36, C.red, { stroke: '#fff', sw: 8, drop: true });
+  if (g.game.keys) text(g.game.keys, W / 2, 400, 15, '#fff', { stroke: C.ink, sw: 4 });
 }
 
 function drawPlay(): void {
+  if (g.game.keys) text(g.game.keys, W / 2, 112, 13, '#fff', { w: 500, stroke: C.ink, sw: 4 });
   text(g.game.cmd, W / 2, 84, 18, '#fff', { stroke: C.ink, sw: 5, drop: true });
   const f = 1 - g.frac, bw = W - 32;
   ctx.fillStyle = 'rgba(27,31,59,.5)'; rr(16, 616, bw, 12, 6);

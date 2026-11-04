@@ -14,6 +14,7 @@ export const g = {
   bag: [] as number[],
   ok: false, msg: '', faster: false, winText: '',
   best: 0,
+  round: 0,
 };
 
 const BEST_KEY = 'bayraa-best';
@@ -30,8 +31,10 @@ function next(first = false): void {
     if (!first && games[g.bag[0]] === g.game) g.bag.push(g.bag.shift()!);
   }
   g.game = games[g.bag.shift()!];
+  g.round++;
   g.game.dead = false;
   g.game.init();
+  ctl.playing = false; ctl.frac = 0;
   g.state = 'intro'; g.st = 0;
   g.introDur = 1.4 / Math.sqrt(g.speed);
   g.dur = 5 / g.speed;
@@ -41,6 +44,7 @@ function next(first = false): void {
 function win(): void {
   if (g.state !== 'play') return;
   g.state = 'result'; g.ok = true; g.st = 0; g.resDur = 1.1; g.score++;
+  ctl.playing = false; g.game.cancelInput?.();
   g.winText = g.game.winText ?? ['ЗӨВ!', 'ГОЁ!', 'САЙН БАЙНА!'][Math.floor(Math.random() * 3)];
   g.faster = false;
   if (g.score % 4 === 0) { g.speed = Math.min(2.3, g.speed * 1.15); g.faster = true; }
@@ -50,6 +54,7 @@ function win(): void {
 function lose(msg: string): void {
   if (g.state !== 'play') return;
   g.state = 'result'; g.ok = false; g.msg = msg; g.st = 0; g.resDur = 3.2; g.lives--; g.faster = false;
+  ctl.playing = false; g.game.cancelInput?.();
   sfx('lose');
   try { navigator.vibrate?.(120); } catch { /* unsupported */ }
 }
@@ -76,7 +81,7 @@ export function step(dt: number): void {
       else { g.game.dead = true; lose(g.game.lose); }
     }
   } else if (g.state === 'result') {
-    g.game.update(dt * g.speed);
+    g.game.resultUpdate?.(dt);
     if (g.st >= g.resDur) afterResult();
   }
   ctl.playing = g.state === 'play';
@@ -86,6 +91,7 @@ export function step(dt: number): void {
 export function debugStart(i: number): void {
   startRun();
   g.game = games[i % games.length];
+  g.round++;
   g.game.dead = false; g.game.init();
   g.state = 'play'; g.st = 0;
 }

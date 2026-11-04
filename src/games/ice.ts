@@ -15,13 +15,14 @@ export class Ice implements Micro {
   readonly lose = 'Хальтирч унлаа!';
   readonly tip = 'Мөсөн дээр жижиг алхмаар, гараа халааснаасаа гаргаж алх. Гулгадаггүй ултай гутал өмс.';
   readonly timeoutWin = true;
+  readonly keys = '← →';
   dead = false;
   private lane = 1; private px = LANES[1]; private rows: Row[] = [];
   private sp = 0; private rot = 0; private first = true;
 
   init(): void { this.lane = 1; this.px = LANES[1]; this.rows = []; this.sp = 0; this.rot = 0; this.first = true; }
   update(dt: number): void {
-    if (this.dead) { this.rot = Math.min(1.5, this.rot + dt * 6); return; }
+    if (this.dead) return;
     this.px += (LANES[this.lane] - this.px) * Math.min(1, dt * 14);
     this.sp -= dt;
     if (this.sp <= 0) {
@@ -38,6 +39,7 @@ export class Ice implements Micro {
     this.rows = this.rows.filter(r => r.y < 700);
   }
   down(x: number): void { this.lane = x < 130 ? 0 : x < 230 ? 1 : 2; }
+  resultUpdate(dt: number): void { if (this.dead) this.rot = Math.min(1.5, this.rot + dt * 6); }
   key(k: string, isDown: boolean): void {
     if (!isDown) return;
     if (k === 'ArrowLeft') this.lane = Math.max(0, this.lane - 1);

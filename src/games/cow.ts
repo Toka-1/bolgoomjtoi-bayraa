@@ -14,9 +14,12 @@ export class Cow implements Micro {
   readonly lose = 'Хоцорлоо!';
   readonly tip = 'Хөдөө замд мал гэнэт гарч ирдэг. Хурдаа сааруулж, мал бүрэн гартал хүлээ.';
   dead = false;
+  readonly keys = 'Space / ↓ — тоормос';
+  private brakeKeys = new Set<string>();
+  private pointerHold = false;
   private cx = 20; private v = 100; private hold = false; private cowY = 360; private t = 0; private t0 = 0;
 
-  init(): void { this.cx = 20; this.v = 100; this.hold = false; this.cowY = 360; this.t = 0; this.t0 = 0.1 + Math.random() * 0.4; }
+  init(): void { this.cx = 20; this.v = 100; this.cancelInput(); this.cowY = 360; this.t = 0; this.t0 = 0.1 + Math.random() * 0.4; }
   update(dt: number): void {
     if (this.dead) return;
     this.t += dt;
@@ -27,9 +30,15 @@ export class Cow implements Micro {
     if (this.cowY > 405 && this.cowY < 495 && this.cx + 78 > 176 && this.cx < 244) { this.dead = true; ctl.lose('Үхэр мөргөчихлөө!'); }
     if (this.cx + 78 >= 335) ctl.win();
   }
-  down(): void { this.hold = true; }
-  up(): void { this.hold = false; }
-  key(k: string, isDown: boolean): void { if (k === ' ' || k === 'ArrowDown') this.hold = isDown; }
+  down(): void { this.pointerHold = true; this.syncBrake(); }
+  up(): void { this.pointerHold = false; this.syncBrake(); }
+  private syncBrake(): void { this.hold = this.pointerHold || this.brakeKeys.size > 0; }
+  cancelInput(): void { this.pointerHold = false; this.brakeKeys.clear(); this.syncBrake(); }
+  key(k: string, isDown: boolean): void {
+    if (k !== ' ' && k !== 'ArrowDown') return;
+    if (isDown) this.brakeKeys.add(k); else this.brakeKeys.delete(k);
+    this.syncBrake();
+  }
   draw(): void {
     layer('cow-road', paintRoad);
     flag(345, 380);

@@ -12,12 +12,17 @@ export class Socket implements Micro {
   readonly lose = 'Цахилгаанд цохиулчихлаа!';
   readonly tip = 'Залгуур руу сэрээ, түлхүүр зэрэг төмөр юм хэзээ ч бүү хий. Хүүхэдтэй гэрт залгуурын хамгаалалт тавь.';
   readonly timeoutWin = true;
+  readonly keys = 'Юу ч бүү дар';
   readonly winText = 'ЗӨВ, ХҮРСЭНГҮЙ!';
   dead = false;
   private zap = 0;
 
   init(): void { this.zap = 0; }
-  update(dt: number): void { if (this.zap > 0) this.zap -= dt; }
+  update(): void {}
+  resultUpdate(dt: number): void { this.zap = Math.max(0, this.zap - dt); }
+  key(k: string, isDown: boolean): void {
+    if (isDown && (k === 'Enter' || k === ' ')) this.down(250, 300);
+  }
   down(x: number, y: number): void {
     if (dist(x, y, 250, 300) < 60 || dist(x, y, 120, 478) < 55) { this.zap = 0.7; this.dead = true; ctl.lose(this.lose); }
   }
