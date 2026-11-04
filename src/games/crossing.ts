@@ -22,6 +22,7 @@ export class Crossing implements Micro {
   readonly sub = 'Ногоон асахад дэлгэц дээр дар';
   readonly lose = 'Хоцорлоо!';
   readonly tip = 'Явган хүний гарцаар зөвхөн ногоон гэрэл асахад гар. Гарахаасаа өмнө зүүн, баруун тийшээ хар. Утсаа ширтэж бүү алх.';
+  readonly keys = 'Space / ↑ — зам гарах';
   dead = false;
   private t = 0;
   private redT = 1.5;
@@ -45,10 +46,15 @@ export class Crossing implements Micro {
 
   private get green(): boolean { return this.t >= this.redT; }
 
-  update(dt: number): void {
-    this.t += dt;
+  /** Cosmetic: walk across (or stumble) and fade the crash flash. */
+  resultUpdate(dt: number): void {
     if (this.hit > 0) this.hit -= dt;
     if (this.walking) this.walk = Math.min(1, this.walk + dt / 1.6);
+  }
+
+  update(dt: number): void {
+    this.t += dt;
+    this.resultUpdate(dt);
 
     // traffic
     for (const l of [0, 1] as const) {

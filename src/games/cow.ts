@@ -35,6 +35,7 @@ export class Cow implements Micro {
   up(): void { this.pointerHold = false; this.syncBrake(); }
   private syncBrake(): void { this.hold = this.pointerHold || this.brakeKeys.size > 0; }
   cancelInput(): void { this.pointerHold = false; this.brakeKeys.clear(); this.syncBrake(); }
+  hint(): void { if (!this.hold) gesture(180, 550, 180, 550, 30); }
   key(k: string, isDown: boolean): void {
     if (k !== ' ' && k !== 'ArrowDown') return;
     if (isDown) this.brakeKeys.add(k); else this.brakeKeys.delete(k);

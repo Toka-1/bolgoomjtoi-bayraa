@@ -29,15 +29,6 @@ export class Ice implements Micro {
   }
   update(dt: number): void {
     if (this.dead) return;
-    this.px += (LANES[this.lane] - this.px) * Math.min(1, dt * 14);
-    this.sp -= dt;
-    if (this.sp <= 0) {
-      this.sp = 0.8;
-      const free = Math.floor(Math.random() * 3), others = [0, 1, 2].filter(l => l !== free);
-      const lanes = Math.random() < 0.5 ? others : [others[Math.floor(Math.random() * 2)]];
-      this.rows.push({ y: this.first ? 150 : -30, lanes, seed: (Math.random() * 1e9) | 0 });
-      this.first = false;
-    }
     this.t += dt;
     this.scroll += dt * 110;
     if (this.slip > 0) this.slip -= dt;
@@ -56,14 +47,19 @@ export class Ice implements Micro {
     this.a += this.w * dt;
     if (Math.abs(this.a) > FALL) { this.dead = true; ctl.lose(this.lose); }
   }
+  /** Cosmetic: finish the fall once he has gone over. */
+  resultUpdate(dt: number): void {
+    if (!this.dead) return;
+    this.w += Math.sign(this.a || 1) * 9 * dt;
+    this.a = Math.max(-1.5, Math.min(1.5, this.a + this.w * dt));
+  }
   /** Tap the left half to lean left, the right half to lean right. */
   private nudge(dir: number): void {
     if (this.dead) return;
     this.w += dir * 1.0;
     this.push = 0.18; this.pushDir = dir;
   }
-  down(x: number): void { this.lane = x < 130 ? 0 : x < 230 ? 1 : 2; }
-  resultUpdate(dt: number): void { if (this.dead) this.rot = Math.min(1.5, this.rot + dt * 6); }
+  down(x: number): void { this.nudge(x < 180 ? -1 : 1); }
   key(k: string, isDown: boolean): void {
     if (!isDown) return;
     if (k === 'ArrowLeft') this.nudge(-1);
@@ -108,7 +104,7 @@ export class Ice implements Micro {
 
 /** Balance gauge: needle shows the lean, red zones at the ends. */
 function meter(a: number, danger: number): void {
-  const cx = W / 2, cy = 190, R = 70, span = 1.1;
+  const cx = W / 2, cy = 210, R = 70, span = 1.1;
   ctx.lineCap = 'butt';
   ctx.lineWidth = 12;
   ctx.strokeStyle = 'rgba(27,31,59,.45)';
