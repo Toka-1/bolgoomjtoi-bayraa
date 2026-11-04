@@ -1,0 +1,10 @@
+:root {
+  --ink: #1b1f3b;
+  --gold: #f4b400;
+}
+html, body {
+  height: 100%; margin: 0; background: var(--ink); color-scheme: dark; overflow: hidden;
+  touch-action: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent;
+}
+canvas { display: block; width: 100%; height: 100%; outline: none; }
+canvas:focus-visible { outline: 3px solid var(--gold); outline-offset: -3px; }
