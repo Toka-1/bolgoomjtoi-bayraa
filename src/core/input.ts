@@ -1,6 +1,6 @@
 import { cv, view } from './canvas';
 import { unlockAudio } from './audio';
-import { g, startRun, afterResult, beginPractice, goHome } from '../flow';
+import { g, startRun, afterResult, goHome } from '../flow';
 import { uiPress, uiKey } from '../ui/meta';
 import type { Micro } from '../games';
 
@@ -43,7 +43,7 @@ export function installInput(): () => void {
     clear();
     // menus, HUD buttons and practice start are handled by the UI layer
     if (uiPress(x, y)) return;
-    if (g.state === 'result') { if (!g.ok && g.st > 0.8) afterResult(); return; }
+    if (g.state === 'result') return;
     if (g.state !== 'play') return;
     pointer = e.pointerId; claim();
     try { cv.setPointerCapture(e.pointerId); } catch { /* window release still handles it */ }
@@ -84,8 +84,7 @@ export function installInput(): () => void {
     if (uiKey(e.key)) return;
     const activate = e.key === 'Enter' || e.key === ' ';
     if (activate && (g.state === 'title' || (g.state === 'over' && g.st > 0.6))) { clear(); startRun(); return; }
-    if (activate && g.state === 'intro' && g.practice) { clear(); beginPractice(); return; }
-    if (activate && g.state === 'result' && !g.ok && g.st > 0.8) { clear(); afterResult(); return; }
+    if (activate && g.state === 'result' && !g.ok && g.st >= 3) { clear(); afterResult(); return; }
     if (g.state !== 'play') return;
     if (!current()) clear();
     claim(); held.add(e.key); g.game.key?.(e.key, true);

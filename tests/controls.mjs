@@ -27,16 +27,42 @@ assert.equal(ctl.wins, 2, 'cancellation must not submit a successful drop');
 const { Smoke } = load('games/smoke.ts', ['Smoke'], gameBindings);
 const smoke = new Smoke(); smoke.init();
 smoke.key?.('Enter', true); smoke.key?.(' ', true);
-assert.equal(ctl.wins, 2, 'Enter/Space cannot open the window');
+assert.equal(ctl.wins, 2, 'Enter/Space cannot escape the room');
 for (const [x, y] of [[100, 400], [205, 210], [335, 210], [270, 145], [270, 275]]) smoke.down(x, y);
-assert.equal(ctl.wins, 2, 'clicks outside the visible window cannot open it');
-smoke.down(270, 210);
+assert.equal(ctl.wins, 2, 'window and scenery clicks cannot solve the smoke level');
+smoke.down(292, 390);
 assert.equal(ctl.wins, 3);
-smoke.down(270, 210); assert.equal(ctl.wins, 3, 'window opens only once');
-const { Socket } = load('games/socket.ts', ['Socket'], gameBindings);
+smoke.down(292, 390); assert.equal(ctl.wins, 3, 'escape scores only once');
+smoke.resultUpdate(1); assert.equal(smoke.exit, 1, 'successful result moves the child outdoors');
+const { Socket, OUTLET, tipLength } = load('games/socket.ts', ['Socket', 'OUTLET', 'tipLength'], gameBindings);
 const socket = new Socket(); socket.init(); socket.key(' ', false); assert.equal(ctl.losses, 0);
-socket.key(' ', true); assert.equal(ctl.losses, 1);
+socket.key(' ', true); socket.key('Enter', true); socket.down(OUTLET.x, OUTLET.y);
+assert.equal(ctl.losses, 0, 'keypresses and a bare socket tap are not insertion');
+socket.down(socket.items[0].x, socket.items[0].y); socket.move(90, 540); socket.up();
+assert.equal(ctl.losses, 0, 'picking up and dropping away from the outlet is safe');
+socket.down(socket.items[0].x, socket.items[0].y);
+socket.move(OUTLET.x, OUTLET.y + tipLength(socket.items[0]));
+assert.equal(ctl.losses, 1, 'inserting a fork causes an electric-shock failure');
+assert.equal(socket.dead, true); assert.ok(socket.zap > 0);
+socket.move(OUTLET.x, OUTLET.y); assert.equal(ctl.losses, 1, 'shock is triggered only once');
 socket.resultUpdate(1); assert.equal(socket.zap, 0);
+{
+  const actions={wins:0,losses:0,win(){this.wins++;},lose(){this.losses++;}};
+  const {Socket: TestSocket}=load('games/socket.ts',['Socket'],{...gameBindings,ctl:actions});
+  const m=new TestSocket();m.init();
+  m.down(m.items[1].x,m.items[1].y);m.move(OUTLET.x,OUTLET.y+tipLength(m.items[1]));
+  assert.equal(actions.losses,1,'key insertion also causes a shock');
+  m.init();m.down(m.items[0].x,m.items[0].y);m.move(OUTLET.x,OUTLET.y);
+  assert.equal(actions.losses,1,'object body over the plate is not tip insertion');
+  m.cancelInput();assert.equal(m.drag,-1);assert.equal(m.items[0].x,m.items[0].homeX);
+  m.init();m.down(m.items[0].x,m.items[0].y);m.move(OUTLET.x,OUTLET.y+80);m.move(OUTLET.x,OUTLET.y-40);
+  assert.equal(actions.losses,2,'fast pointer movement cannot skip over the insertion area');
+  const flowControls={};
+  const {Socket: RoundSocket}=load('games/socket.ts',['Socket'],{...gameBindings,ctl:flowControls});
+  const roundSocket=new RoundSocket();
+  const f=load('flow.ts',['startRun','step','g'],{ctl:flowControls,games:[roundSocket],sfx(){},navigator:{},meta:{allowed(){return true;},unlock(){return false;}},localStorage:{getItem(){return null;},setItem(){}}});
+  f.startRun();f.step(5);assert.equal(f.g.ok,true,'leaving the socket and objects alone wins');
+}
 const { Cow } = load('games/cow.ts', ['Cow'], gameBindings);
 const cow = new Cow(); cow.init(); cow.key(' ', true); cow.key('ArrowDown', true); cow.key(' ', false);
 assert.equal(cow.hold, true, 'releasing one brake key preserves another');
@@ -89,7 +115,7 @@ dust.pick(gerAt); assert.equal(ctl.wins, w0, 'only one choice per round');
 dust.init(); dust.t = 10; dust.pick(dust.kinds.indexOf('ger')); assert.equal(ctl.wins, w0, 'cannot pick what the storm has hidden');
 dust.init(); dust.pick(dust.kinds.indexOf('ger')); assert.equal(ctl.wins, w0 + 1, 'running to the ger wins');
 
-const { Cabinet } = load('games/cabinet.ts', ['Cabinet'], { ...gameBindings, CAB: undefined });
+const { Cabinet, ITEM_SCALE, itemBottom } = load('games/cabinet.ts', ['Cabinet','ITEM_SCALE','itemBottom'], { ...gameBindings });
 const cab = new Cabinet(); cab.init();
 const cw0 = ctl.wins, cl0 = ctl.losses;
 for (let i = 0; i < 2; i++) { const it = cab.items.find(t => !t.stored); cab.select(it.x, it.y); cab.move(270, 220); cab.select(270, 220); }
@@ -100,16 +126,29 @@ assert.equal(ctl.wins, cw0, 'cancelling a drag does not store the item');
 assert.ok(last.y >= 440, 'a cancelled item falls back to the floor');
 cab.select(last.x, last.y); cab.move(270, 220); cab.select(270, 220);
 assert.equal(ctl.wins, cw0 + 1, 'storing all three wins');
+for(const it of cab.items) assert.ok([224,292].some(y=>Math.abs(it.y+itemBottom(it.kind)*ITEM_SCALE-y)<0.001),'stored object rests directly on its shelf');
+cab.bx=last.x;cab.by=last.y+12;cab.update(0.016);
+assert.equal(ctl.losses,cl0,'stored objects cannot be reached by the baby');
+cab.init();const entryX=cab.bx,entryY=cab.by;cab.update(0.2);
+assert.equal(cab.bx,entryX);assert.equal(cab.by,entryY,'baby gives a brief arrival cue before crawling');
 cab.init(); cab.bx = cab.items[0].x + 10; cab.by = cab.items[0].y; cab.update(0.016);
 assert.equal(ctl.losses, cl0 + 1, 'the toddler reaching an item loses');
 
 const { River } = load('games/river.ts', ['River'], gameBindings);
 const river = new River(); river.init();
 const rw0 = ctl.wins, rl0 = ctl.losses;
-for (let i = 0; i < 120 && ctl.wins === rw0; i++) { if (i % 6 === 0) river.down(); river.update(1 / 60); }
-assert.equal(ctl.wins, rw0 + 1, 'swimming steadily reaches the bank');
+river.down(60, 500);
+for (let i = 0; i < 120 && ctl.wins === rw0; i++) river.update(1 / 60);
+assert.equal(ctl.wins, rw0 + 1, 'leading the child away from water wins on dry ground');
+assert.ok(river.x < 182);
 river.init(); for (let i = 0; i < 600 && ctl.losses === rl0; i++) river.update(1 / 60);
-assert.equal(ctl.losses, rl0 + 1, 'doing nothing drifts into deep water');
+assert.equal(ctl.losses, rl0 + 1, 'letting the child enter the water loses');
+river.init(); river.down(250, 500);
+assert.equal(ctl.losses, rl0 + 2, 'choosing the water loses immediately');
+for (let i = 0; i < 120; i++) { river.down(60, 500); river.key('ArrowLeft', true); river.key(' ', true); river.update(1 / 60); }
+assert.equal(ctl.wins, rw0 + 1, 'entering water cannot be turned into a swimming win');
+river.init(); river.key('ArrowLeft', true); river.update(1);
+assert.equal(ctl.wins, rw0 + 2, 'left arrow leads the child away from the water');
 
 // end-of-run quiz and teacher-mode topic filter
 {
@@ -139,7 +178,7 @@ const flowCtl = {};
 let gameplay = 0, cosmetics = 0;
 const micro = { cmd: 'test', lose: 'miss', dead: false, timeoutWin: true, init() {}, update() { gameplay++; }, resultUpdate() { cosmetics++; } };
 const flow = load('flow.ts', ['g','startRun','step','afterResult'], { ctl: flowCtl, games: [micro], sfx() {}, meta: { unlock() { return false; }, allowed() { return true; }, quiz() { return []; } }, localStorage: { getItem(k) { return k === 'bayraa-learned-v1' ? '["test"]' : null; }, setItem() {} }, navigator: {} });
-flow.startRun(); flow.step(1.5); flow.step(5);
+flow.startRun(); flow.step(5);
 assert.equal(flow.g.score, 1); assert.equal(flowCtl.playing, false);
 flow.step(0.1); assert.equal(gameplay, 1); assert.equal(cosmetics, 1);
 flowCtl.lose('late collision'); assert.equal(flow.g.lives, 3);

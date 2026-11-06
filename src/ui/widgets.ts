@@ -2,7 +2,8 @@ import { ctx } from '../core/canvas';
 import { C, FONT, lin, rad, rr, circ, text, shadow, type Paint } from '../core/draw';
 
 export interface Btn { x: number; y: number; w: number; h: number }
-export const PLAY_BTN: Btn = { x: 70, y: 526, w: 220, h: 58 };
+export const PLAY_BTN: Btn = { x: 26, y: 526, w: 152, h: 58 };
+export const PRACTICE_BTN: Btn = { x: 186, y: 526, w: 148, h: 58 };
 export const CARDS_BTN: Btn = { x: 26, y: 594, w: 152, h: 38 };
 export const TEACH_BTN: Btn = { x: 186, y: 594, w: 148, h: 38 };
 /** Sound toggle: top-right on the title, next to the home button during play. */

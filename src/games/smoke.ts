@@ -1,40 +1,53 @@
-import { gesture } from '../ui/gesture';
+import { gesture, highlightRect } from '../ui/gesture';
 import { ctx, W, H, clock, layer } from '../core/canvas';
-import { lin, rad, rr, ell, seg, circ } from '../core/draw';
+import { lin, rr, ell, seg, circ } from '../core/draw';
 import { ctl } from '../core/ctl';
 import { bayraa } from '../art/bayraa';
 import { stove, pipe } from '../art/props';
-import { planks, skirting, mottle, cloud, puffSprite, drawPuff, ridge } from '../art/scenery';
+import { planks, skirting, mottle, puffSprite, drawPuff, ridge } from '../art/scenery';
 import type { Micro } from './types';
 
 const WX = 210, WY = 150, WW = 120, WH = 120;
+const DOOR = { x: 242, y: 285, w: 100, h: 215 };
 
 export class Smoke implements Micro {
-  readonly cmd = 'ЦОНХОО НЭЭ!';
-  readonly sub = 'Цонхон дээр дарж нээ';
-  readonly lose = 'Угаартчихлаа…';
-  readonly tip = 'Зуух түлж байхдаа салхивчаа онгорхой байлга. Толгой өвдөж, дотор муухайрвал даруй цэвэр агаарт гар.';
+  readonly cmd = 'ГАДАГШ ГАР!';
+  readonly sub = 'Хаалган дээр дарж гадагш гар';
+  readonly lose = 'Гадагш гарч амжсангүй!';
+  readonly tip = 'Угаарын аюултай үед хаалгаар гадагш гарч, том хүнд хэл. Цонх нээх гэж дотор бүү үлд.';
+  readonly winText = 'ГАДАА ГАРЛАА!';
   dead = false;
   private open = false;
   private smoke = 0.15;
+  private exit = 0;
 
-  init(): void { this.open = false; this.smoke = 0.15; }
+  init(): void { this.open = false; this.exit = 0; this.smoke = 0.15; }
   update(dt: number): void {
-    this.smoke = this.open ? Math.max(0, this.smoke - dt * 1.5) : Math.min(1, this.smoke + dt * 0.2);
+    this.smoke = Math.min(1, this.smoke + dt * 0.2);
   }
   down(x: number, y: number): void {
-    if (!this.open && x >= WX && x <= WX + WW && y >= WY && y <= WY + WH) { this.open = true; ctl.win(); }
+    if (!this.dead && !this.open && x >= DOOR.x && x <= DOOR.x + DOOR.w && y >= DOOR.y && y <= DOOR.y + DOOR.h) { this.open = true; ctl.win(); }
   }
-  resultUpdate(dt: number): void { if (this.open) this.smoke = Math.max(0, this.smoke - dt * 1.5); }
+  resultUpdate(dt: number): void { if (this.open) this.exit = Math.min(1, this.exit + dt * 1.8); }
 
-  hint(): void { if (!this.open) gesture(270, 210, 270, 210, 52); }
+  hint(): void {
+    if (this.open) return;
+    highlightRect(DOOR.x, DOOR.y, DOOR.w, DOOR.h);
+    gesture(292, 390, 292, 390, 36);
+  }
   draw(): void {
+    if (this.exit >= 1) {
+      ctx.fillStyle = lin(0, 0, 0, H, [[0, '#83c8ef'], [1, '#eef9ff']]); ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = '#8fbd62'; ctx.fillRect(0, 480, W, H - 480);
+      bayraa(245, 574, 1.65, { mood: 'happy' });
+      return;
+    }
     layer('smoke-room', paintRoom);
-    windowView(this.open);
+    windowView();
+    drawDoor(this.open);
     pipe(84, 0, 400, 22);
     stove(40, 390, 110, 110);
-    if (this.open) lightShaft();
-    bayraa(230, 575, 1.65, {
+    bayraa(184 + this.exit * 108, 575 - this.exit * 75, 1.65 - this.exit * 0.2, {
       mood: this.dead ? 'dead' : this.open ? 'happy' : 'scared',
       green: !this.open && this.smoke > 0.45, rot: this.dead ? -0.25 : 0,
     });
@@ -73,55 +86,24 @@ function paintRoom(): void {
   ctx.fillStyle = lin(0, 0, 0, 60, [[0, 'rgba(40,25,10,.25)'], [1, 'rgba(40,25,10,0)']]); ctx.fillRect(0, 0, W, 60);
 }
 
-function windowView(open: boolean): void {
-  ctx.save();
-  ctx.beginPath(); ctx.rect(WX, WY, WW, WH); ctx.clip();
-  if (open) {
-    ctx.fillStyle = lin(0, WY, 0, WY + WH, [[0, '#5fb4ef'], [1, '#d6efff']]); ctx.fillRect(WX, WY, WW, WH);
-    ctx.fillStyle = rad(WX + 95, WY + 25, 60, [[0, 'rgba(255,250,220,.9)'], [1, 'rgba(255,250,220,0)']]); circ(WX + 95, WY + 25, 60);
-    cloud(WX + 40, WY + 38, 0.45, 1, 3); cloud(WX + 90, WY + 75, 0.35, 0.9, 8);
-    ctx.fillStyle = lin(0, WY + 90, 0, WY + WH, [[0, '#9cc0d8'], [1, '#7aa0bc']]);
-    ctx.beginPath(); ctx.moveTo(WX, WY + WH); ctx.lineTo(WX, WY + 100); ctx.lineTo(WX + 30, WY + 92); ctx.lineTo(WX + 70, WY + 104); ctx.lineTo(WX + 120, WY + 96); ctx.lineTo(WX + WW, WY + WH); ctx.fill();
-  } else {
-    ctx.fillStyle = lin(0, WY, 0, WY + WH, [[0, '#55697d'], [1, '#8b98a3']]); ctx.fillRect(WX, WY, WW, WH);
-    ctx.fillStyle = 'rgba(40,52,66,.7)';
-    for (const [bx, bw, bh] of [[WX, 26, 50], [WX + 30, 34, 70], [WX + 70, 22, 44], [WX + 94, 30, 60]] as const) ctx.fillRect(bx, WY + WH - bh, bw, bh);
-    ctx.fillStyle = 'rgba(200,205,210,.35)'; ctx.fillRect(WX, WY, WW, WH);
-    // frost creeping in from the corners
-    ctx.fillStyle = rad(WX, WY + WH, 70, [[0, 'rgba(240,248,255,.75)'], [1, 'rgba(240,248,255,0)']]); ctx.fillRect(WX, WY, WW, WH);
-    ctx.fillStyle = rad(WX + WW, WY + WH, 50, [[0, 'rgba(240,248,255,.6)'], [1, 'rgba(240,248,255,0)']]); ctx.fillRect(WX, WY, WW, WH);
-    ctx.fillStyle = 'rgba(255,255,255,.18)';
-    ctx.beginPath(); ctx.moveTo(WX + 10, WY); ctx.lineTo(WX + 40, WY); ctx.lineTo(WX, WY + 50); ctx.lineTo(WX, WY + 20); ctx.fill();
-  }
-  ctx.restore();
-
-  const wood = (horizontal: boolean, a: number, b: number) => horizontal
-    ? lin(0, a, 0, b, [[0, '#d8a06a'], [0.5, '#b07040'], [1, '#7c4a24']])
-    : lin(a, 0, b, 0, [[0, '#d8a06a'], [0.5, '#b07040'], [1, '#7c4a24']]);
-  ctx.strokeStyle = wood(false, WX - 4, WX + WW + 4); ctx.lineWidth = 8; ctx.strokeRect(WX, WY, WW, WH);
-  ctx.strokeStyle = 'rgba(255,230,190,.35)'; ctx.lineWidth = 1.5; ctx.strokeRect(WX - 3.5, WY - 3.5, WW + 7, WH + 7);
-  ctx.lineWidth = 5;
-  if (!open) {
-    ctx.strokeStyle = wood(false, WX + WW / 2 - 3, WX + WW / 2 + 3); seg(WX + WW / 2, WY, WX + WW / 2, WY + WH);
-    ctx.strokeStyle = wood(true, WY + WH / 2 - 3, WY + WH / 2 + 3); seg(WX, WY + WH / 2, WX + WW, WY + WH / 2);
-  } else {
-    for (const [a, b] of [[WX, WX - 30], [WX + WW, WX + WW + 30]] as const) {
-      ctx.beginPath(); ctx.moveTo(a, WY); ctx.lineTo(b, WY + 14); ctx.lineTo(b, WY + WH - 14); ctx.lineTo(a, WY + WH); ctx.closePath();
-      ctx.fillStyle = lin(a, 0, b, 0, [[0, 'rgba(210,235,255,.55)'], [1, 'rgba(160,200,230,.8)']]); ctx.fill();
-      ctx.strokeStyle = wood(false, Math.min(a, b), Math.max(a, b)); ctx.stroke();
-      ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 1.5; seg(a + (b - a) * 0.3, WY + 20, a + (b - a) * 0.6, WY + 50); ctx.lineWidth = 5;
-    }
-  }
-  // sill
-  ctx.fillStyle = lin(0, WY + WH + 2, 0, WY + WH + 14, [[0, '#e9e2d6'], [1, '#a59a88']]); rr(WX - 14, WY + WH + 2, WW + 28, 11, 3);
-  ctx.fillStyle = 'rgba(40,25,10,.2)'; ell(WX + WW / 2, WY + WH + 17, WW / 2 + 10, 4);
+/** Closed window: scenery only, with no opening animation or input handler. */
+function windowView(): void {
+  ctx.fillStyle = lin(0, WY, 0, WY + WH, [[0, '#627e97'], [1, '#a3bacb']]);
+  ctx.fillRect(WX, WY, WW, WH);
+  ctx.strokeStyle = '#a57148'; ctx.lineWidth = 8; ctx.strokeRect(WX, WY, WW, WH);
+  ctx.lineWidth = 5; seg(WX + WW / 2, WY, WX + WW / 2, WY + WH); seg(WX, WY + WH / 2, WX + WW, WY + WH / 2);
+  ctx.fillStyle = '#e0d8c8'; rr(WX - 10, WY + WH + 2, WW + 20, 10, 3);
+  ctx.fillStyle = 'rgba(40,25,10,.2)'; ell(WX + WW / 2, WY + WH + 16, WW / 2 + 8, 4);
 }
 
-function lightShaft(): void {
-  ctx.save();
-  ctx.globalCompositeOperation = 'lighter';
-  ctx.fillStyle = lin(WX, WY, WX - 100, H, [[0, 'rgba(255,248,220,.28)'], [1, 'rgba(255,248,220,0)']]);
-  ctx.beginPath(); ctx.moveTo(WX, WY + 4); ctx.lineTo(WX + WW, WY + WH); ctx.lineTo(WX + 60, H); ctx.lineTo(WX - 150, H); ctx.closePath(); ctx.fill();
-  ctx.restore();
+function drawDoor(open: boolean): void {
+  const { x, y, w, h } = DOOR;
+  ctx.fillStyle = '#543b29'; rr(x - 7, y - 7, w + 14, h + 7, 5);
+  ctx.fillStyle = open ? lin(0, y, 0, y + h, [[0, '#9edbff'], [0.8, '#e8f8ff'], [1, '#8fbd62']]) : lin(x, 0, x + w, 0, [[0, '#d99a53'], [1, '#985729']]);
+  ctx.fillRect(x, y, w, h);
+  if (open) { ctx.fillStyle = '#ffe7a2'; circ(x + 65, y + 40, 15); }
+  else {
+    ctx.strokeStyle = '#f5c879'; ctx.lineWidth = 3; ctx.strokeRect(x + 12, y + 14, w - 24, h - 30);
+    ctx.fillStyle = '#f4b400'; circ(x + w - 18, y + h * 0.55, 5);
+  }
 }
-

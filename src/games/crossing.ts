@@ -1,4 +1,4 @@
-import { gesture } from '../ui/gesture';
+import { gesture, highlight, stopHint } from '../ui/gesture';
 import { ctx, W, H, clock, reduce, layer } from '../core/canvas';
 import { lin, rad, rr, circ, seg, text, rand, glow, C } from '../core/draw';
 import { ctl } from '../core/ctl';
@@ -99,8 +99,9 @@ export class Crossing implements Micro {
   /** Only show where to tap once it is actually safe. */
   hint(): void {
     if (this.walking) return;
+    highlight(300, 360, 43);
     if (this.green) gesture(180, 450, 180, 450, 40);
-    else text('Хүлээ…', 180, 450, 20, '#fff', { stroke: C.ink, sw: 5 });
+    else stopHint(180, 540, 28);
   }
   key(k: string, isDown: boolean): void { if (isDown && (k === ' ' || k === 'ArrowUp' || k === 'Enter')) this.down(); }
 

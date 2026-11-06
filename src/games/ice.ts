@@ -1,6 +1,6 @@
 import { gesture } from '../ui/gesture';
 import { ctx, W, H, reduce, layer } from '../core/canvas';
-import { lin, rad, ell, seg, rr, circ, text, C } from '../core/draw';
+import { lin, rad, ell, seg, rr, circ, C } from '../core/draw';
 import { ctl } from '../core/ctl';
 import { rng } from '../core/rng';
 import { bayraa } from '../art/bayraa';
@@ -93,7 +93,6 @@ export class Ice implements Micro {
       const side = this.a > 0 ? -1 : 1, x = side < 0 ? 0 : W / 2;
       ctx.fillStyle = lin(side < 0 ? 0 : W, 0, W / 2, 0, [[0, `rgba(244,180,0,${(danger - 0.3) * 0.5})`], [1, 'rgba(244,180,0,0)']]);
       ctx.fillRect(x, 0, W / 2, H);
-      text(side < 0 ? '◀' : '▶', side < 0 ? 34 : W - 34, 400, 34, '#fff', { stroke: C.ink, sw: 6 });
     }
     if (this.push > 0) {
       ctx.fillStyle = `rgba(255,255,255,${this.push})`;

@@ -117,6 +117,9 @@ function mnVoice(): SpeechSynthesisVoice | undefined {
   try { return speechSynthesis.getVoices().find(v => v.lang.toLowerCase().startsWith('mn')); } catch { return undefined; }
 }
 export const canSpeak = (): boolean => !!mnVoice();
+export function stopSpeaking(): void {
+  try { speechSynthesis.cancel(); } catch { /* speech unavailable */ }
+}
 export function speak(text: string): void {
   const v = mnVoice();
   if (!v || !enabled) return;

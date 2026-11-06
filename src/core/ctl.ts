@@ -4,6 +4,6 @@ export const ctl = {
   lose: (_msg: string): void => {},
   /** 0→1 progress of the current round's timer. */
   frac: 0,
-  /** True while the player can act (not intro / result). */
+  /** True while the player can act, outside menus and results. */
   playing: false,
 };

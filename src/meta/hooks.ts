@@ -2,6 +2,7 @@ import type { Micro } from '../games/types';
 import { infoOf, type Quiz } from './content';
 import { progress, unlockCard } from './progress';
 import { games } from '../games';
+import { speak, stopSpeaking } from '../core/audio';
 
 export interface QuizItem extends Quiz { cmd: string }
 
@@ -10,6 +11,10 @@ export interface QuizItem extends Quiz { cmd: string }
  * so the flow tests can stub it.
  */
 export const meta = {
+  narrate: (message: string): void => speak(message),
+  silence: (): void => stopSpeaking(),
+  /** Reading questions belong to the adult-led mode. */
+  readingQuiz: false,
   unlock: (cmd: string): boolean => unlockCard(cmd),
   allowed: (m: Micro): boolean => { const i = infoOf(m.cmd); return !i || progress.topics.has(i.topic); },
   /** Three questions, preferring the games played this run. */

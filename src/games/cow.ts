@@ -1,6 +1,6 @@
-import { gesture } from '../ui/gesture';
+import { gesture, highlight } from '../ui/gesture';
 import { ctx, W, H, clock, reduce, layer } from '../core/canvas';
-import { lin, rad, rr, seg, text, C, circ } from '../core/draw';
+import { lin, rad, rr, seg, C, circ } from '../core/draw';
 import { ctl } from '../core/ctl';
 import { rng } from '../core/rng';
 import { cow, car, ger } from '../art/props';
@@ -36,7 +36,11 @@ export class Cow implements Micro {
   up(): void { this.pointerHold = false; this.syncBrake(); }
   private syncBrake(): void { this.hold = this.pointerHold || this.brakeKeys.size > 0; }
   cancelInput(): void { this.pointerHold = false; this.brakeKeys.clear(); this.syncBrake(); }
-  hint(): void { if (!this.hold) gesture(180, 550, 180, 550, 30); }
+  hint(): void {
+    if (this.cowY >= CAR_Y + 50) return;
+    highlight(COW_X + 5, this.cowY - 24, 34);
+    if (!this.hold) gesture(180, 550, 180, 550, 30);
+  }
   key(k: string, isDown: boolean): void {
     if (k !== ' ' && k !== 'ArrowDown') return;
     if (isDown) this.brakeKeys.add(k); else this.brakeKeys.delete(k);
@@ -48,7 +52,6 @@ export class Cow implements Micro {
     const shake = this.dead && !reduce ? Math.sin(clock.t * 50) * 2 : 0;
     const drawCar = () => car(this.cx, CAR_Y, this.hold, shake);
     if (this.cowY < CAR_Y) { cow(COW_X, this.cowY, COW_SCALE); drawCar(); } else { drawCar(); cow(COW_X, this.cowY, COW_SCALE); }
-    if (this.hold && !this.dead) text('ЗОГСОЖ БАЙНА', 180, 540, 18, '#fff', { stroke: C.ink, sw: 5, drop: true });
   }
 }
 

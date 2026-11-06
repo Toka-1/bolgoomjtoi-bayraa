@@ -3,7 +3,7 @@ import { sfx } from './core/audio';
 import { games, type Micro } from './games';
 import { meta, type QuizItem } from './meta/hooks';
 
-export type State = 'title' | 'intro' | 'play' | 'result' | 'quiz' | 'over' | 'cards' | 'topics';
+export type State = 'title' | 'practice' | 'play' | 'result' | 'quiz' | 'over' | 'cards' | 'topics';
 
 export const g = {
   state: 'title' as State,
@@ -11,7 +11,7 @@ export const g = {
   game: games[0] as Micro,
   /** seconds in the current state */
   st: 0,
-  dur: 5, introDur: 1.4, resDur: 1.1, frac: 0,
+  dur: 5, resDur: 1.1, frac: 0,
   bag: [] as number[],
   ok: false, msg: '', faster: false, winText: '',
   best: 0, practice: false,
@@ -26,17 +26,11 @@ export const g = {
   bonus: 0,
 };
 
-const LEARNED_KEY = 'bayraa-learned-v1';
-const learned = new Set<string>();
-try {
-  const saved: unknown = JSON.parse(localStorage.getItem(LEARNED_KEY) ?? '[]');
-  if (Array.isArray(saved)) for (const id of saved) if (typeof id === 'string') learned.add(id);
-} catch { /* storage blocked or invalid */ }
-
 const BEST_KEY = 'bayraa-best';
 try { g.best = Number(localStorage.getItem(BEST_KEY)) || 0; } catch { /* storage blocked */ }
 
 export function startRun(): void {
+  g.practice = false;
   g.score = 0; g.lives = 3; g.speed = 1; g.bag = []; g.faster = false; g.played = []; g.bonus = 0;
   next(true);
 }
@@ -50,7 +44,6 @@ function next(first = false): void {
     if (!first && g.bag.length > 1 && games[g.bag[0]] === g.game) g.bag.push(g.bag.shift()!);
   }
   g.game = games[g.bag.shift()!];
-  g.practice = !learned.has(g.game.cmd);
   prepareRound();
 }
 
@@ -60,11 +53,11 @@ function prepareRound(): void {
   g.newCard = false;
   g.game.dead = false;
   g.game.init();
-  ctl.playing = false; ctl.frac = 0;
-  g.state = 'intro'; g.st = 0;
-  g.introDur = 1.4 / Math.sqrt(g.speed);
+  ctl.playing = true; ctl.frac = 0;
+  g.state = 'play'; g.st = 0;
   g.dur = g.practice ? 5 : 5 / g.speed;
   g.frac = 0;
+  sfx('go');
 }
 
 function win(): void {
@@ -74,18 +67,19 @@ function win(): void {
   ctl.playing = false; g.game.cancelInput?.();
   g.winText = g.game.winText ?? ['ЗӨВ!', 'ГОЁ!', 'САЙН БАЙНА!'][Math.floor(Math.random() * 3)];
   g.faster = false;
-  g.newCard = meta.unlock(g.game.cmd);
+  g.newCard = !g.practice && meta.unlock(g.game.cmd);
   if (!g.practice && g.score % 4 === 0) { g.speed = Math.min(2.3, g.speed * 1.15); g.faster = true; }
   sfx(g.newCard ? 'card' : 'win');
 }
 
 function lose(msg: string): void {
   if (g.state !== 'play') return;
-  g.state = 'result'; g.ok = false; g.msg = msg; g.st = 0; g.resDur = 3.2;
+  g.state = 'result'; g.ok = false; g.msg = msg; g.st = 0; g.resDur = Infinity;
   if (!g.practice) g.lives--;
   g.faster = false;
   ctl.playing = false; g.game.cancelInput?.();
   sfx('lose');
+  meta.narrate?.(g.game.tip);
   try { navigator.vibrate?.(120); } catch { /* unsupported */ }
 }
 
@@ -98,12 +92,8 @@ function saveBest(): void {
 
 export function afterResult(): void {
   if (g.practice) {
-    if (g.ok) {
-      learned.add(g.game.cmd);
-      try { localStorage.setItem(LEARNED_KEY, JSON.stringify([...learned])); } catch { /* storage blocked */ }
-      g.practice = false;
-    }
-    prepareRound();
+    if (g.ok) { g.state = 'practice'; g.st = 0; ctl.playing = false; }
+    else prepareRound();
     return;
   }
   if (g.lives <= 0) startQuiz();
@@ -112,6 +102,7 @@ export function afterResult(): void {
 
 /** End of run: a few questions about what was played, each right answer is a bonus point. */
 function startQuiz(): void {
+  if (meta.readingQuiz === false) { g.quiz = { list: [], i: 0, picked: -1, right: 0 }; finishRun(); return; }
   const list = meta.quiz(g.played);
   g.quiz = { list, i: 0, picked: -1, right: 0 };
   if (!list.length) { finishRun(); return; }
@@ -133,24 +124,28 @@ function finishRun(): void {
   saveBest();
 }
 
-export function openScreen(s: 'cards' | 'topics'): void { g.state = s; g.st = 0; }
+export function openScreen(s: 'cards' | 'topics' | 'practice'): void { g.state = s; g.st = 0; }
 
 /** Leave the run and go back to the title screen; the score still counts toward the best. */
 export function goHome(): void {
+  meta.silence?.(); meta.readingQuiz = false;
   saveBest();
   g.state = 'title'; g.st = 0; g.frac = 0; g.practice = false;
   ctl.playing = false;
 }
 
-export function beginPractice(): void {
-  if (g.state !== 'intro' || !g.practice) return;
-  g.state = 'play'; g.st = 0; ctl.playing = true; sfx('go');
+/** Explicit practice selection; never mixed into a scored run. */
+export function startPractice(i: number): void {
+  if (!Number.isInteger(i) || i < 0 || i >= games.length) return;
+  meta.silence?.(); meta.readingQuiz = false;
+  g.practice = true; g.score = 0; g.lives = 3; g.speed = 1; g.faster = false; g.bonus = 0;
+  g.quiz = { list: [], i: 0, picked: -1, right: 0 };
+  g.game = games[i]; prepareRound();
 }
 
 export function step(dt: number): void {
   g.st += dt;
-  if (g.state === 'intro' && !g.practice && g.st >= g.introDur) { g.state = 'play'; g.st = 0; sfx('go'); }
-  else if (g.state === 'play') {
+  if (g.state === 'play') {
     g.frac = Math.min(1, g.st / g.dur);
     ctl.frac = g.frac; ctl.playing = true;
     g.game.update(dt * (g.practice ? 1 : g.speed));
@@ -183,5 +178,5 @@ export function debugStart(i: number): void {
 /** Dev only: open a menu screen directly (used by ?screen=cards|topics|quiz). */
 export function debugScreen(s: string): void {
   if (s === 'cards' || s === 'topics') { openScreen(s); return; }
-  if (s === 'quiz') { startRun(); g.lives = 0; startQuiz(); }
+  if (s === 'quiz') { meta.readingQuiz = true; startRun(); g.lives = 0; startQuiz(); }
 }

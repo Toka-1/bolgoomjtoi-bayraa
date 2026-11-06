@@ -1,4 +1,4 @@
-import { gesture } from '../ui/gesture';
+import { gesture, highlight } from '../ui/gesture';
 import { ctx, W, H, clock, reduce, layer } from '../core/canvas';
 import { lin, rad, rr, circ, ell, seg, dist, shadow, C } from '../core/draw';
 import { ctl } from '../core/ctl';
@@ -13,9 +13,11 @@ import type { Micro } from './types';
 /** The wall cabinet's open interior; dropping an item inside it stores it. */
 const CAB = { x: 214, y: 140, w: 126, h: 160 };
 /** Where stored items sit on the shelves. */
-const SHELF: ReadonlyArray<readonly [number, number]> = [[244, 200], [300, 200], [272, 268]];
+const SHELF: ReadonlyArray<readonly [number, number]> = [[244, 224], [300, 224], [272, 292]];
 const FLOOR_Y0 = 440, FLOOR_Y1 = 600;
 const BABY_V = 32, REACH = 28, GRAB = 36;
+const ITEM_SCALE = 0.95;
+const itemBottom = (kind: Kind): number => kind === 'lighter' ? 14 : kind === 'pills' ? 10 : 8;
 
 type Kind = 'matches' | 'pills' | 'lighter';
 const LOSE: Record<Kind, string> = {
@@ -37,38 +39,42 @@ export class Cabinet implements Micro {
   private arrows = new DragKeys();
   /** index of the item being dragged, or -1 */
   drag = -1;
-  bx = 330; by = 590;
+  bx = 300; by = 580;
   private door = 0;
   private grabbed: Item | null = null;
+  private arrival = 0;
 
   init(): void {
+    this.drag = -1; this.arrows.clear();
     const kinds: Kind[] = ['matches', 'pills', 'lighter'];
     // three floor spots, shuffled, on the left two-thirds of the room
     const spots: Array<[number, number]> = [[56, 470], [130, 560], [205, 500]];
     for (let i = spots.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [spots[i], spots[j]] = [spots[j], spots[i]]; }
     this.items = kinds.map((kind, i) => ({ kind, x: spots[i][0] + (Math.random() - 0.5) * 20, y: spots[i][1] + (Math.random() - 0.5) * 16, stored: false, slot: -1 }));
-    this.bx = 330; this.by = 590; this.door = 0; this.grabbed = null; this.dead = false;
-    this.cancelInput();
+    this.bx = 300; this.by = 580; this.door = 0; this.grabbed = null; this.dead = false; this.arrival = 0;
   }
 
   private get stored(): number { return this.items.filter(i => i.stored).length; }
 
   update(dt: number): void {
+    if (this.dead) return;
     if (this.drag >= 0) {
       const it = this.items[this.drag], [dx, dy] = this.arrows.delta(dt);
       it.x = Math.max(16, Math.min(W - 16, it.x + dx));
       it.y = Math.max(120, Math.min(H - 30, it.y + dy));
     }
-    if (this.dead) return;
+    this.arrival += dt;
     // the toddler crawls to the nearest item still on the floor (not one in your hand)
     const free = this.items.filter((it, i) => !it.stored && i !== this.drag);
     if (!free.length) return;
     let target = free[0];
-    for (const it of free) if (dist(it.x, it.y, this.bx, this.by) < dist(target.x, target.y, this.bx, this.by)) target = it;
-    const d = dist(target.x, target.y, this.bx, this.by);
+    for (const it of free) if (dist(it.x, it.y, this.bx, this.by - 12) < dist(target.x, target.y, this.bx, this.by - 12)) target = it;
+    const dx = target.x - this.bx, dy = target.y + 12 - this.by;
+    const d = Math.hypot(dx, dy);
     if (d < REACH) { this.dead = true; this.grabbed = target; ctl.lose(LOSE[target.kind]); return; }
-    this.bx += ((target.x - this.bx) / d) * BABY_V * dt;
-    this.by += ((target.y + 6 - this.by) / d) * BABY_V * dt;
+    if (this.arrival < 0.45) return;
+    this.bx += (dx / d) * BABY_V * dt;
+    this.by += (dy / d) * BABY_V * dt;
   }
   /** Cosmetic: the cabinet door swings shut once everything is stored. */
   resultUpdate(dt: number): void { if (this.stored === 3) this.door = Math.min(1, this.door + dt * 3); }
@@ -81,12 +87,13 @@ export class Cabinet implements Micro {
   }
   move(x: number, y: number): void { if (this.drag >= 0) { const it = this.items[this.drag]; it.x = x; it.y = y; } }
   up(): void {
-    if (this.drag < 0) return;
+    if (this.drag < 0 || this.dead) return;
     const it = this.items[this.drag];
     this.drag = -1; this.arrows.clear();
     if (it.x > CAB.x && it.x < CAB.x + CAB.w && it.y > CAB.y && it.y < CAB.y + CAB.h) {
       it.stored = true; it.slot = this.stored - 1;
       [it.x, it.y] = SHELF[it.slot];
+      it.y -= itemBottom(it.kind) * ITEM_SCALE;
       sfx(this.stored === 3 ? 'door' : 'tap');
       if (this.stored === 3) ctl.win();
     } else dropToFloor(it);
@@ -102,32 +109,41 @@ export class Cabinet implements Micro {
     return this.drag >= 0;
   }
   hint(): void {
-    if (this.drag >= 0) return;
+    if (this.drag >= 0) { highlight(CAB.x + CAB.w / 2, CAB.y + CAB.h / 2, 60); return; }
     const it = this.items.find(i => !i.stored);
     if (it) gesture(it.x, it.y, CAB.x + CAB.w / 2, CAB.y + CAB.h / 2, 46);
   }
 
   draw(): void {
-    layer('cabinet-room', paintRoom);
+    layer('cabinet-room-grounded', paintRoom);
     cabinetBody(this.door);
-    for (const it of this.items) if (it.stored) item(it.kind, it.x, it.y, 1.05);
+    for (const it of this.items) if (it.stored) item(it.kind, it.x, it.y, ITEM_SCALE);
     if (this.door > 0) cabinetDoor(this.door);
     if (this.drag >= 0) {
       ctx.strokeStyle = C.gold; ctx.lineWidth = 3; ctx.setLineDash([6, 5]);
       ctx.strokeRect(CAB.x + 4, CAB.y + 4, CAB.w - 8, CAB.h - 8); ctx.setLineDash([]);
     }
     const danger = this.dead || this.items.some(it => !it.stored && dist(it.x, it.y, this.bx, this.by) < 90);
-    bayraa(112, 470, 1.5, { mood: this.stored === 3 ? 'happy' : danger ? 'scared' : 'ok', arms: danger ? 1 : 0 });
-    // floor items, back to front, then the toddler
-    const floor = this.items.filter((it, i) => !it.stored && i !== this.drag && it !== this.grabbed).sort((a, b) => a.y - b.y);
-    for (const it of floor) { shadow(it.x, it.y + 8, 14, 4, 0.3); item(it.kind, it.x, it.y, 0.95); }
+    // Sort people and objects on their floor contact point so nearer things occlude farther ones.
+    const actors: Array<[number, () => void]> = [];
+    actors.push([470, () => bayraa(112, 470, 1.5, { mood: this.stored === 3 ? 'happy' : danger ? 'scared' : 'ok', arms: danger ? 1 : 0 })]);
+    for (const [i, it] of this.items.entries()) if (!it.stored && it !== this.grabbed && i !== this.drag) {
+      actors.push([it.y + itemBottom(it.kind) * ITEM_SCALE, () => {
+        shadow(it.x, it.y + itemBottom(it.kind) * ITEM_SCALE, 14, 4, 0.3);
+        item(it.kind, it.x, it.y, ITEM_SCALE);
+      }]);
+    }
     const crawl = this.dead || reduce ? 0 : Math.sin(clock.t * 10) * 2;
-    baby(this.bx + 16, this.by, crawl);
-    if (this.grabbed) item(this.grabbed.kind, this.bx - 8, this.by - 6, 1.1, -0.4);
+    actors.push([this.by, () => {
+      baby(this.bx + 16, this.by, crawl);
+      if (this.grabbed) item(this.grabbed.kind, this.bx - 8, this.by - 6, ITEM_SCALE, -0.4);
+    }]);
+    actors.sort((a, b) => a[0] - b[0]);
+    for (const [, paint] of actors) paint();
     if (this.drag >= 0) {
       const it = this.items[this.drag];
       ctx.fillStyle = 'rgba(10,20,40,.18)'; ell(it.x + 6, it.y + 16, 18, 6);
-      item(it.kind, it.x, it.y, 1.15);
+      item(it.kind, it.x, it.y, ITEM_SCALE);
     }
     if (this.dead) { ctx.fillStyle = 'rgba(229,51,42,.18)'; ctx.fillRect(0, 0, W, H); }
   }

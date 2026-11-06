@@ -1,4 +1,4 @@
-import { TOPICS, type Topic } from './content';
+import { TOPICS, infoOf, type Topic } from './content';
 import { OUTFITS, look, type OutfitId } from '../art/look';
 
 /** Everything the player keeps between visits. */
@@ -22,7 +22,7 @@ try {
   const s: unknown = JSON.parse(localStorage.getItem(KEY) ?? 'null');
   if (s && typeof s === 'object') {
     const o = s as { cards?: unknown; topics?: unknown; sound?: unknown; outfit?: unknown };
-    if (Array.isArray(o.cards)) for (const c of o.cards) if (typeof c === 'string') progress.cards.add(c);
+    if (Array.isArray(o.cards)) for (const c of o.cards) if (typeof c === 'string' && infoOf(c)) progress.cards.add(c);
     if (Array.isArray(o.topics)) {
       const ok = o.topics.filter((t): t is Topic => TOPICS.some(x => x.id === t));
       if (ok.length) progress.topics = new Set(ok);

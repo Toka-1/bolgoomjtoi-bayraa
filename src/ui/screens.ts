@@ -1,13 +1,13 @@
 import { ctx, W, H, clock, reduce, layer } from '../core/canvas';
-import { C, FONT, lin, rad, rr, circ, text, wrap } from '../core/draw';
+import { C, lin, rad, rr, circ, text } from '../core/draw';
 import { audioEnabled, canSpeak } from '../core/audio';
-import { drawCards, drawTopics, drawQuiz, SPEAK_BTN } from './meta';
+import { drawCards, drawTopics, drawQuiz, drawPractice, SPEAK_BTN } from './meta';
+import { drawLesson, lessonButton, check, LESSON_CONTINUE, LESSON_REPLAY } from './lessons';
 import { progress } from '../meta/progress';
-import { TOPICS, INFO, infoOf } from '../meta/content';
+import { TOPICS, INFO } from '../meta/content';
 
 const TOTAL_CARDS = Object.keys(INFO).length;
-const INFO_CARD = (): string => infoOf(g.game.cmd)?.card ?? '';
-import { PLAY_BTN, CARDS_BTN, TEACH_BTN, AGAIN_BTN, HOME_BTN, HUD_HOME, HUD_SOUND, SOUND_BTN, goldFace, homeIcon, soundIcon, panel, button } from './widgets';
+import { PLAY_BTN, PRACTICE_BTN, CARDS_BTN, TEACH_BTN, AGAIN_BTN, HOME_BTN, HUD_HOME, HUD_SOUND, SOUND_BTN, goldFace, homeIcon, soundIcon, panel, button } from './widgets';
 export { type Btn, PLAY_BTN, AGAIN_BTN, HOME_BTN, HUD_HOME, inBtn, inHudHome } from './widgets';
 import { bayraa } from '../art/bayraa';
 import { ger } from '../art/props';
@@ -20,13 +20,13 @@ export function render(): void {
   if (g.state === 'title') { drawTitle(); vignette(0.3); grain(); }
   else if (g.state === 'cards') drawCards();
   else if (g.state === 'topics') drawTopics();
+  else if (g.state === 'practice') drawPractice();
   else {
     g.game.draw();
     vignette();
     grain();
     hud();
-    if (g.state === 'intro') drawIntro();
-    else if (g.state === 'play') drawPlay();
+    if (g.state === 'play') drawPlay();
     else if (g.state === 'result') drawResult();
     else if (g.state === 'quiz') drawQuiz();
     else drawOver();
@@ -54,39 +54,12 @@ function hud(): void {
   ctx.strokeStyle = 'rgba(120,70,0,.45)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(36, 36, 16, 0, Math.PI * 2); ctx.stroke();
   text(String(g.score), 36, 37, 20, C.ink);
   if (g.state !== 'over') { homeIcon(HUD_HOME.x, HUD_HOME.y, HUD_HOME.r); soundIcon(HUD_SOUND.x, HUD_SOUND.y, HUD_SOUND.r, audioEnabled()); }
-  for (let i = 0; i < 3; i++) heart(W - 30 - i * 32, 36, 11, i < g.lives);
-}
-
-function drawIntro(): void {
-  ctx.fillStyle = 'rgba(27,31,59,.38)'; ctx.fillRect(0, 0, W, H);
-  const pop = reduce ? 1 : 1 + 0.25 * Math.max(0, 1 - g.st * 6);
-  ctx.save(); ctx.translate(W / 2, 300); ctx.scale(pop, pop);
-  panel(-150, -60, 300, 120, 20, goldFace(-60, 60));
-  // largest size up to 32 that fits inside the 300-wide banner
-  let size = 32;
-  ctx.font = `900 ${size}px ${FONT}`;
-  const w = ctx.measureText(g.game.cmd).width;
-  if (w > 268) size = Math.max(18, Math.floor(size * 268 / w));
-  text(g.game.cmd, 0, -14, size, C.ink);
-  text(g.game.sub, 0, 30, 15, C.ink, { w: 500 });
-  ctx.restore();
-  if (g.practice) {
-    text('ДАДЛАГА', W / 2, 200, 26, '#fff', { stroke: C.ink, sw: 5 });
-    text('Амь, оноо өөрчлөгдөхгүй', W / 2, 410, 17, '#fff', { w: 500 });
-    text('Дарж эхлэх · Enter', W / 2, 455, 19, '#fff');
-  }
-  if (g.faster) text('ХУРДАН!', W / 2, 200, 36, C.red, { stroke: '#fff', sw: 8, drop: true });
-  if (g.game.keys) text(g.game.keys, W / 2, g.practice ? 500 : 400, 15, '#fff', { stroke: C.ink, sw: 4 });
+  if (g.practice) text('ДАДЛАГА', W - 62, 36, 14, '#fff', { stroke: C.ink, sw: 4 });
+  else for (let i = 0; i < 3; i++) heart(W - 30 - i * 32, 36, 11, i < g.lives);
 }
 
 function drawPlay(): void {
-  if (g.practice) {
-    text('ДАДЛАГА · Амь хасагдахгүй', W / 2, 112, 14, C.gold, { stroke: C.ink, sw: 4 });
-    text(g.game.sub, W / 2, 585, 15, '#fff', { stroke: C.ink, sw: 4 });
-    g.game.hint?.();
-  }
-  if (g.game.keys) text(g.game.keys, W / 2, g.practice ? 132 : 112, 13, '#fff', { w: 500, stroke: C.ink, sw: 4 });
-  text(g.game.cmd, W / 2, 84, 18, '#fff', { stroke: C.ink, sw: 5, drop: true });
+  g.game.hint?.();
   const f = 1 - g.frac, bw = W - 32;
   ctx.fillStyle = 'rgba(27,31,59,.5)'; rr(16, 616, bw, 12, 6);
   ctx.fillStyle = f < 0.3 ? lin(0, 616, 0, 628, [[0, '#ff6a5c'], [1, '#b81a12']]) : goldFace(616, 628);
@@ -104,25 +77,24 @@ function drawResult(): void {
     const size = g.winText.length > 8 ? 34 : 54;
     text(g.winText, 0, 0, size, goldFace(-size / 2, size / 2), { stroke: C.ink, sw: 10, drop: true });
     ctx.restore();
-    if (g.practice) text('Одоо оноотой тоглоё!', W / 2, 300, 19, '#fff', { stroke: C.ink, sw: 4 });
+    check(W / 2, 182, 32);
     if (g.newCard) {
       const k = reduce ? 1 : Math.min(1, g.st * 4);
       ctx.save(); ctx.translate(W / 2, 370); ctx.scale(k, k); ctx.rotate(reduce ? 0 : Math.sin(clock.t * 3) * 0.04);
-      panel(-70, -44, 140, 88, 12, lin(0, -44, 0, 44, [[0, '#ffffff'], [1, '#e8ecf6']]));
-      text('ШИНЭ КАРТ!', 0, -18, 18, C.red);
-      text(INFO_CARD(), 0, 12, 15, C.ink, { w: 700 });
+      panel(-76, -57, 152, 114, 12, '#fff');
+      drawLesson(g.game.cmd, -70, -51, 140, 102, 3);
       ctx.restore();
     }
     return;
   }
   ctx.fillStyle = 'rgba(27,31,59,.62)'; ctx.fillRect(0, 0, W, H);
-  text(g.practice ? 'ДАХИАД ОРОЛДЪЁ!' : 'ӨӨ, ҮГҮЙ!', W / 2, 190, g.practice ? 30 : 46, '#fff', { stroke: C.red, sw: 10, drop: true });
-  text(g.msg, W / 2, 250, 22, '#fff', { w: 700 });
-  panel(28, 300, W - 56, 170, 18, lin(0, 300, 0, 470, [[0, '#ffffff'], [1, '#eef0f6']]), 'rgba(27,31,59,.0)');
-  text('Санаж яваарай', W / 2, 330, 16, C.red);
-  wrap(g.game.tip, W / 2, 366, W - 96, 16, C.ink);
+  text('ХАМТДАА СУРЪЯ', W / 2, 126, 26, '#fff');
+  drawLesson(g.game.cmd, 18, 158, 324, 288, g.st);
+  lessonButton(LESSON_REPLAY.x, LESSON_REPLAY.y, LESSON_REPLAY.r, true);
+  ctx.save(); ctx.globalAlpha = g.st >= 3 ? 1 : 0.3;
+  lessonButton(LESSON_CONTINUE.x, LESSON_CONTINUE.y, LESSON_CONTINUE.r, false);
+  ctx.restore();
   if (canSpeak()) soundIcon(SPEAK_BTN.x, SPEAK_BTN.y, SPEAK_BTN.r, true);
-  if (g.st > 0.8) text('Дарж үргэлжлүүл', W / 2, 520, 15, '#fff', { w: 500 });
 }
 
 function paintTitle(): void {
@@ -153,6 +125,7 @@ function drawTitle(): void {
   text('Баяраа', W / 2, 205, 60, goldFace(175, 235), { stroke: C.ink, sw: 11, drop: true });
   text('Монгол амьдралын аюулаас Баярааг авар', W / 2, 256, 15, C.ink, { w: 700, stroke: 'rgba(255,255,255,.6)', sw: 4 });
   button(PLAY_BTN, 'ТОГЛОХ');
+  button(PRACTICE_BTN, 'ДАДЛАГА', true);
   button(CARDS_BTN, 'КАРТУУД ' + progress.cards.size + '/' + TOTAL_CARDS, true);
   button(TEACH_BTN, 'БАГШ', true);
   soundIcon(SOUND_BTN.x, SOUND_BTN.y, SOUND_BTN.r, audioEnabled());

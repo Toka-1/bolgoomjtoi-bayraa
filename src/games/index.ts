@@ -9,6 +9,12 @@ import { Crossing } from './crossing';
 import { Dust } from './dust';
 import { Cabinet } from './cabinet';
 import { River } from './river';
+import { Dog } from './dog';
+import { Drink } from './drink';
+import { Manhole } from './manhole';
+import { Seatbelt } from './seatbelt';
+import { Balcony } from './balcony';
+import { Cleaner } from './cleaner';
 
-export const games: Micro[] = [new Smoke(), new Ice(), new Socket(), new Hat(), new Cow(), new Baby(), new Crossing(), new Dust(), new Cabinet(), new River()];
+export const games: Micro[] = [new Smoke(), new Ice(), new Socket(), new Hat(), new Cow(), new Baby(), new Crossing(), new Dust(), new Cabinet(), new River(), new Dog(), new Drink(), new Manhole(), new Seatbelt(), new Balcony(), new Cleaner()];
 export type { Micro };

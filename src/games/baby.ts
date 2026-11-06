@@ -1,4 +1,4 @@
-import { gesture } from '../ui/gesture';
+import { gesture, highlight } from '../ui/gesture';
 import { ctx, W, H, clock, reduce, layer } from '../core/canvas';
 import { lin, rr, seg, text, dist, C, shadow } from '../core/draw';
 import { ctl } from '../core/ctl';
@@ -50,7 +50,11 @@ export class Baby implements Micro {
     if (this.bx > 230 && this.bx < 350 && this.by > 260 && this.by < 400) { this.safe = true; this.bx = 290; this.by = 340; ctl.win(); }
     else { this.by = 545; this.bx = Math.max(160, Math.min(330, this.bx)); }
   }
-  hint(): void { if (!this.safe && !this.drag) gesture(this.bx, this.by - 16, 290, 324, 48); }
+  hint(): void {
+    if (this.safe) return;
+    if (this.drag) highlight(290, 324, 48);
+    else gesture(this.bx, this.by - 16, 290, 324, 48);
+  }
   draw(): void {
     layer('baby-ger', paintGer);
     if (this.drag) {
