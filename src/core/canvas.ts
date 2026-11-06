@@ -18,7 +18,10 @@ const baked = new Map<string, HTMLCanvasElement>();
 
 export function resize(): void {
   view.dpr = Math.min(window.devicePixelRatio || 1, 3);
-  const iw = innerWidth, ih = innerHeight;
+  // Use the visible canvas box: mobile browser bars and safe-area padding can
+  // make it smaller than the layout viewport used by innerWidth/innerHeight.
+  const bounds = cv.getBoundingClientRect();
+  const iw = Math.max(1, bounds.width), ih = Math.max(1, bounds.height);
   cv.width = Math.round(iw * view.dpr);
   cv.height = Math.round(ih * view.dpr);
   view.scale = Math.min(iw / W, ih / H);

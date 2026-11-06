@@ -9,15 +9,18 @@ export const TEACH_BTN: Btn = { x: 186, y: 594, w: 148, h: 38 };
 /** Sound toggle: top-right on the title, next to the home button during play. */
 export const SOUND_BTN = { x: 324, y: 36, r: 20 };
 export const HUD_SOUND = { x: 140, y: 36, r: 20 };
-export const inCircle = (c: { x: number; y: number; r: number }, x: number, y: number): boolean => Math.hypot(x - c.x, y - c.y) < c.r + 10;
+export const inCircle = (c: { x: number; y: number; r: number }, x: number, y: number): boolean => Math.hypot(x - c.x, y - c.y) < Math.max(22, c.r + 3);
 export const AGAIN_BTN: Btn = { x: 60, y: 470, w: 240, h: 64 };
 export const HOME_BTN: Btn = { x: 100, y: 556, w: 160, h: 48 };
 /** Small round home button in the HUD, next to the score. */
 export const HUD_HOME = { x: 88, y: 36, r: 20 };
-export const inHudHome = (x: number, y: number): boolean => Math.hypot(x - HUD_HOME.x, y - HUD_HOME.y) < HUD_HOME.r + 10;
-export const inBtn = (b: Btn, x: number, y: number): boolean => x > b.x && x < b.x + b.w && y > b.y && y < b.y + b.h + 6;
+export const inHudHome = (x: number, y: number): boolean => inCircle(HUD_HOME, x, y);
+export const inBtn = (b: Btn, x: number, y: number): boolean => {
+  const padY = Math.max(0, (44 - b.h) / 2);
+  return x >= b.x && x <= b.x + b.w && y >= b.y - padY && y <= b.y + b.h + padY;
+};
 
-export const goldFace = (y0: number, y1: number): Paint => lin(0, y0, 0, y1, [[0, '#ffd75a'], [0.5, C.gold], [1, '#d18f00']]);
+export const goldFace = (_y0: number, _y1: number): Paint => '#e8b653';
 
 
 /** Round glassy button with a house pictogram. */
@@ -33,11 +36,11 @@ export function homeIcon(x: number, y: number, r: number): void {
 
 export function panel(x: number, y: number, w: number, h: number, r: number, fill: Paint, line: string = C.ink): void {
   ctx.save();
-  ctx.shadowColor = 'rgba(10,12,30,.45)'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 6;
+  ctx.shadowColor = 'rgba(30,39,63,.24)'; ctx.shadowBlur = 16; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 7;
   ctx.fillStyle = fill; rr(x, y, w, h, r);
   ctx.restore();
-  ctx.lineWidth = 4; ctx.strokeStyle = line; ctx.beginPath(); ctx.roundRect(x, y, w, h, r); ctx.stroke();
-  ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.lineWidth = 2;
+  ctx.lineWidth = 1.5; ctx.strokeStyle = line; ctx.beginPath(); ctx.roundRect(x, y, w, h, r); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.roundRect(x + 6, y + 6, w - 12, h - 12, Math.max(2, r - 6)); ctx.stroke();
 }
 
@@ -55,11 +58,9 @@ export function button(b: Btn, label: string, secondary = false): void {
     return;
   }
   shadow(b.x + b.w / 2, b.y + b.h + 10, b.w * 0.5, 8, 0.35);
-  ctx.fillStyle = '#0f1230'; rr(b.x, b.y + 6, b.w, b.h, b.h / 2);
+  ctx.fillStyle = '#8f785a'; rr(b.x, b.y + 4, b.w, b.h, b.h / 2);
   ctx.fillStyle = goldFace(b.y, b.y + b.h); rr(b.x, b.y, b.w, b.h, b.h / 2);
-  ctx.fillStyle = lin(0, b.y, 0, b.y + b.h * 0.5, [[0, 'rgba(255,255,255,.55)'], [1, 'rgba(255,255,255,0)']]);
-  rr(b.x + 10, b.y + 4, b.w - 20, b.h * 0.45, b.h / 3);
-  ctx.lineWidth = 3; ctx.strokeStyle = C.ink; ctx.beginPath(); ctx.roundRect(b.x, b.y, b.w, b.h, b.h / 2); ctx.stroke();
+  ctx.lineWidth = 2; ctx.strokeStyle = C.ink; ctx.beginPath(); ctx.roundRect(b.x, b.y, b.w, b.h, b.h / 2); ctx.stroke();
   text(label, b.x + b.w / 2, b.y + b.h / 2 + 1, 24, C.ink);
 }
 

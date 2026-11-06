@@ -1,3 +1,4 @@
+import { dangerZone } from '../art/danger';
 import { gesture } from '../ui/gesture';
 import { ctx, W, H, clock, reduce, layer } from '../core/canvas';
 import { lin, ell, seg } from '../core/draw';
@@ -57,6 +58,7 @@ export class River implements Micro {
     if (this.dead) { this.drift = Math.min(110, this.drift + 35 * dt); this.sink = Math.min(1, this.sink + dt * 0.5); }
   }
   hint(): void { if (!this.safe && !this.dead) gesture(this.x, FEET_Y - 75, SAFE_X, FEET_Y - 75, 35); }
+  danger(): void { if (!this.safe && !this.dead) dangerZone(WATER_X + 3, WATER_Y + 4, 120, 205, 'water'); }
   draw(): void {
     layer('river-prevention', paintRiver);
     // The caregiver stays on dry land; the smaller child is the movable avatar.
@@ -82,13 +84,13 @@ export class River implements Micro {
 }
 
 function paintRiver(): void {
-  ctx.fillStyle = lin(0, 0, 0, WATER_Y, [[0, '#61b4eb'], [1, '#d7effb']]); ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = lin(0, 0, 0, WATER_Y, [[0, '#a4cbd7'], [1, '#d7effb']]); ctx.fillRect(0, 0, W, H);
   sun(290, 150, 22, '#fff6c8', '255,240,180', 0.5);
   cloud(90, 165, 0.7, 0.95, 21); cloud(240, 230, 0.5, 0.85, 22);
   ridge(360, 85, 81, [[0, '#7fa36a'], [1, '#9dbb7a']]);
-  ctx.fillStyle = '#8bb959'; ctx.fillRect(0, 358, W, 35);
+  ctx.fillStyle = '#a4bd8d'; ctx.fillRect(0, 358, W, 35);
   grass(360, 390, 40, 7, 'rgba(40,80,20,.6)', 'rgba(170,210,100,.6)');
-  ctx.fillStyle = lin(0, WATER_Y, 0, H, [[0, '#57b8d8'], [1, '#236d99']]); ctx.fillRect(WATER_X, WATER_Y, W - WATER_X, H - WATER_Y);
+  ctx.fillStyle = lin(0, WATER_Y, 0, H, [[0, '#8ab7c8'], [1, '#658fa6']]); ctx.fillRect(WATER_X, WATER_Y, W - WATER_X, H - WATER_Y);
   ctx.fillStyle = lin(0, WATER_Y, 0, H, [[0, '#ead6a1'], [1, '#d1b37d']]); ctx.fillRect(0, WATER_Y, WATER_X, H - WATER_Y);
   ctx.strokeStyle = '#f4e8c8'; ctx.lineWidth = 8; seg(WATER_X, WATER_Y, WATER_X, H);
   const r = rng(3); ctx.fillStyle = '#ad9c7b';

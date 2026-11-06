@@ -12,6 +12,7 @@ export const g = {
   /** seconds in the current state */
   st: 0,
   dur: 5, resDur: 1.1, frac: 0,
+  effectDur: 2.4, lessonNarrated: false,
   bag: [] as number[],
   ok: false, msg: '', faster: false, winText: '',
   best: 0, practice: false,
@@ -75,11 +76,11 @@ function win(): void {
 function lose(msg: string): void {
   if (g.state !== 'play') return;
   g.state = 'result'; g.ok = false; g.msg = msg; g.st = 0; g.resDur = Infinity;
+  g.lessonNarrated = false;
   if (!g.practice) g.lives--;
   g.faster = false;
   ctl.playing = false; g.game.cancelInput?.();
   sfx('lose');
-  meta.narrate?.(g.game.tip);
   try { navigator.vibrate?.(120); } catch { /* unsupported */ }
 }
 
@@ -160,6 +161,9 @@ export function step(dt: number): void {
     }
   } else if (g.state === 'result') {
     g.game.resultUpdate?.(dt * (g.practice ? 1 : g.speed));
+    if (!g.ok && !g.lessonNarrated && g.st >= g.effectDur) {
+      g.lessonNarrated = true; meta.narrate?.(g.game.tip);
+    }
     if (g.st >= g.resDur) afterResult();
   }
   ctl.playing = g.state === 'play';

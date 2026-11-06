@@ -70,15 +70,52 @@ for(const side of [65,295]) {
  m.down(321,443);assert.equal(events.wins,1);m.init();m.update(4.2);assert.equal(events.losses,2);
  m.init();m.key('ArrowUp',true);assert.equal(events.wins,2);
 }
-for(const [file,name] of [['dog','Dog'],['drink','Drink'],['manhole','Manhole'],['seatbelt','Seatbelt'],['balcony','Balcony'],['cleaner','Cleaner']]) {
+for(const [name,point] of [['Reversing',[300,550]],['Cord',[270,578]],['Icicles',[260,570]]]) {
+ const {m,events}=setup('prevention',name);m.init();
+ m.down(180,100);assert.equal(events.wins,0,'background is not a safe-action button');
+ m.down(60,450);assert.equal(events.wins,1);
+ const approach=m.approach;m.update(10);assert.equal(m.approach,approach,'safe choice stops hazard approach');
+ m.down(...point);assert.equal(events.losses,0,'safe result cannot fail');
+ m.resultUpdate(1);assert.equal(m.walk,1);
+ m.init();m.down(...point);assert.equal(events.losses,1,'dangerous choice fails');
+ m.down(60,450);m.down(...point);m.update(10);
+ assert.equal(events.wins,1);assert.equal(events.losses,1,'failure resolves once');
+ m.init();m.key('ArrowLeft',false);assert.equal(events.wins,1);
+ m.key('ArrowLeft',true);assert.equal(events.wins,2);
+ m.init();m.update(4.4);assert.equal(events.losses,name==='Cord'?1:2,'approaching danger has a deadline; leaving cord alone is safe');
+}
+{
+ const {m,events}=setup('prevention','Cord');m.init();
+ m.down(267,532);assert.equal(events.losses,0,'empty space above the floor cord is not live wire');
+ m.down(270,578);assert.equal(events.losses,1,'exposed copper shares the drawn floor anchor');
+}
+{
+ const {m,events}=setup('prevention','Icicles');m.init();
+ m.down(260,450);assert.equal(events.losses,0,'the wall below the roof is not the falling-ice target');
+ for(let i=0;i<430&&!m.dead;i++)m.update(.01);
+ assert.equal(events.losses,1);
+ assert.ok(m.fallingTip().y>=591-109*1.1&&m.fallingTip().y<473,'failure starts at head height rather than after ground impact');
+}
+for(const name of ['Reversing','Cord','Icicles']) {
+ const {m,people}=setup('prevention',name);m.init();m.down(60,450);
+ for(let i=0;i<60;i++) {
+  m.resultUpdate(1/60);m.people();const [x,y]=people.at(-1);
+  assert.equal(y,591,'retreat does not float up the floor');
+  assert.ok(x>=146&&x<=182,'retreat stays on the clear path');
+ }
+ if(name==='Reversing')assert.ok(m.vehicle().x>xRight(182),'car starts beyond the child footprint');
+}
+function xRight(x){return x+37*1.1;}
+for(const [file,name] of [['dog','Dog'],['drink','Drink'],['manhole','Manhole'],['seatbelt','Seatbelt'],['balcony','Balcony'],['cleaner','Cleaner'],['prevention','Reversing'],['prevention','Cord'],['prevention','Icicles']]) {
  const {m,events}=setup(file,name);
  const f=load('flow.ts',['g','startRun','step'],{ctl:events,games:[m],sfx(){},navigator:{},meta:{allowed(){return true;},unlock(){return false;},readingQuiz:false},localStorage:{getItem(){return null;},setItem(){}}});
- f.startRun();f.step(5.1);assert.equal(f.g.state,'result');assert.equal(f.g.ok,false);
+ f.startRun();f.step(5.1);assert.equal(f.g.state,'result');assert.equal(f.g.ok,name==='Cord');
+ if(name==='Cord')continue;
  f.step(60);assert.equal(f.g.state,'result','timeout lesson waits for the child');
 }
 // Every new game remains reachable on the second practice page.
 const widgets=load('ui/widgets.ts',['PRACTICE_BTN','SOUND_BTN','CARDS_BTN','TEACH_BTN','BACK_BTN','inBtn','inCircle']);
-const g={state:'title'},picked=[],games=Array.from({length:16},(_,i)=>({cmd:String(i)}));
+const g={state:'title'},picked=[],games=Array.from({length:19},(_,i)=>({cmd:String(i)}));
 const menus=load('ui/meta.ts',['uiPress','uiKey','drawPractice'],{
  ...widgets,g,games,W:360,H:640,OUTFITS:[],infoOf:()=>({card:'test'}),
  openScreen(s){g.state=s;},startPractice(i){picked.push(i);},sfx(){},
@@ -88,6 +125,9 @@ menus.uiKey('ArrowRight');menus.uiKey('Enter');assert.equal(picked.at(-1),10);
 menus.uiKey('ArrowRight');menus.uiKey('Enter');assert.equal(picked.at(-1),11);
 menus.uiKey('ArrowRight');menus.uiKey('Enter');assert.equal(picked.at(-1),12);
 for(let i=13;i<=15;i++){menus.uiKey('ArrowRight');menus.uiKey('Enter');assert.equal(picked.at(-1),i);}
-menus.uiPress(180,380);assert.equal(picked.at(-1),15,'last practice tile is visible and clickable');
+menus.uiPress(64,380);assert.equal(picked.at(-1),15,'third-row practice tile is visible and clickable');
+for(let i=16;i<=18;i++){menus.uiKey('ArrowRight');menus.uiKey('Enter');assert.equal(picked.at(-1),i);}
+menus.uiPress(180,140);assert.equal(picked.at(-1),18,'third page exposes the nineteenth round');
+menus.uiPress(70,526);
 menus.uiPress(70,526);menus.uiKey('Enter');assert.equal(picked.at(-1),0);
 console.log('New levels: win/failure paths, safe routes, timeouts and menu pagination passed.');

@@ -1,5 +1,5 @@
 import { ctx, W, H, reduce } from '../core/canvas';
-import { C, lin, rad, rr, circ, text, wrap } from '../core/draw';
+import { C, FONT, lin, rad, rr, circ, text, wrap } from '../core/draw';
 import { setAudioEnabled, speak, canSpeak, sfx } from '../core/audio';
 import { games } from '../games';
 import { TOPICS, infoOf } from '../meta/content';
@@ -54,8 +54,13 @@ function pageTap(page: number, count: number, x: number, y: number): number {
 }
 
 let practiceChoice = 0;
+function fittedLabel(label: string, x: number, y: number, maxWidth: number, size: number, color: string = C.ink): void {
+  ctx.font = `700 ${size}px ${FONT}`;
+  const width = ctx.measureText(label).width;
+  text(label, x, y, width > maxWidth ? size * maxWidth / width : size, color, { w: 700 });
+}
 export function drawPractice(): void {
-  ctx.fillStyle = lin(0, 0, 0, H, [[0, '#24306b'], [1, '#141838']]); ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = lin(0, 0, 0, H, [[0, '#526a76'], [1, '#344951']]); ctx.fillRect(0, 0, W, H);
   backIcon(BACK_BTN.x, BACK_BTN.y, BACK_BTN.r);
   text('ДАДЛАГА', W / 2, 38, 26, C.gold);
   text('Амь, оноо өөрчлөгдөхгүй', W / 2, 70, 14, '#fff', { w: 500 });
@@ -64,7 +69,7 @@ export function drawPractice(): void {
     const b = cardRect(i, visible.length);
     ctx.fillStyle = '#fff'; rr(b.x, b.y, b.w, b.h, 12);
     drawLesson(m.cmd, b.x + 6, b.y + 6, b.w - 12, 72, 3);
-    text(infoOf(m.cmd)?.card ?? '', b.x + b.w / 2, b.y + 94, 12, C.ink, { w: 700 });
+    fittedLabel(infoOf(m.cmd)?.card ?? '', b.x + b.w / 2, b.y + 94, b.w - 12, 12);
     if (practicePage * PAGE_SIZE + i === practiceChoice) {
       ctx.strokeStyle = C.gold; ctx.lineWidth = 4;
       ctx.beginPath(); ctx.roundRect(b.x, b.y, b.w, b.h, 12); ctx.stroke();
@@ -74,7 +79,7 @@ export function drawPractice(): void {
 }
 
 export function drawCards(): void {
-  ctx.fillStyle = lin(0, 0, 0, H, [[0, '#24306b'], [1, '#141838']]); ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = lin(0, 0, 0, H, [[0, '#526a76'], [1, '#344951']]); ctx.fillRect(0, 0, W, H);
   backIcon(BACK_BTN.x, BACK_BTN.y, BACK_BTN.r);
   text('КАРТУУД', W / 2, 38, 26, goldFace(24, 52), { stroke: C.ink, sw: 6 });
   text(progress.cards.size + ' / ' + carded.length, W - 44, 38, 16, '#fff', { w: 700 });
@@ -86,8 +91,8 @@ export function drawCards(): void {
       ctx.fillStyle = 'rgba(0,0,0,.35)'; rr(b.x + 2, b.y + 5, b.w, b.h, 12);
       ctx.fillStyle = lin(0, b.y, 0, b.y + b.h, [[0, '#ffffff'], [1, '#e6eaf4']]); rr(b.x, b.y, b.w, b.h, 12);
       drawLesson(m.cmd, b.x + 6, b.y + 6, b.w - 12, 66, 3);
-      text(info.card, b.x + b.w / 2, b.y + 80, info.card.length > 11 ? 11 : 13, C.ink, { w: 700 });
-      text(TOPICS.find(t => t.id === info.topic)!.label, b.x + b.w / 2, b.y + 97, 11, '#6b7090', { w: 500 });
+      fittedLabel(info.card, b.x + b.w / 2, b.y + 80, b.w - 12, 13);
+      fittedLabel(TOPICS.find(t => t.id === info.topic)!.label, b.x + b.w / 2, b.y + 97, b.w - 12, 11, '#6b7090');
     } else {
       ctx.fillStyle = 'rgba(0,0,0,.35)'; rr(b.x + 2, b.y + 5, b.w, b.h, 12);
       ctx.fillStyle = lin(0, b.y, 0, b.y + b.h, [[0, '#3a4486'], [1, '#262d5e']]); rr(b.x, b.y, b.w, b.h, 12);
@@ -116,7 +121,7 @@ function drawDetail(i: number): void {
   const m = carded[i], info = infoOf(m.cmd)!;
   ctx.fillStyle = 'rgba(10,12,30,.7)'; ctx.fillRect(0, 0, W, H);
   panel(12, 80, W - 24, 496, 18, '#fff');
-  text(info.card, W / 2, 112, 24, C.ink);
+  fittedLabel(info.card, W / 2, 112, W - 56, 24);
   drawLesson(m.cmd, 20, 140, 320, 280, g.st);
   wrap(info.fact, W / 2, 451, W - 80, 14, '#3a3f60');
   lessonButton(LESSON_REPLAY.x, LESSON_REPLAY.y, LESSON_REPLAY.r, true);
@@ -128,7 +133,7 @@ const topicRow = (i: number): Btn => ({ x: 30, y: 128 + i * 88, w: W - 60, h: 74
 const START_BTN: Btn = { x: 70, y: 500, w: 220, h: 62 };
 
 export function drawTopics(): void {
-  ctx.fillStyle = lin(0, 0, 0, H, [[0, '#24306b'], [1, '#141838']]); ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = lin(0, 0, 0, H, [[0, '#526a76'], [1, '#344951']]); ctx.fillRect(0, 0, W, H);
   backIcon(BACK_BTN.x, BACK_BTN.y, BACK_BTN.r);
   text('БАГШИЙН ГОРИМ', W / 2, 40, 22, goldFace(28, 52), { stroke: C.ink, sw: 5 });
   text('Ангидаа тоглуулах сэдвээ сонгоорой', W / 2, 88, 14, '#c9cbe0', { w: 500 });
@@ -139,7 +144,7 @@ export function drawTopics(): void {
     ctx.fillStyle = on ? lin(0, b.y, 0, b.y + b.h, [[0, '#ffffff'], [1, '#e6eaf4']]) : 'rgba(255,255,255,.12)';
     rr(b.x, b.y, b.w, b.h, 14);
     // checkbox
-    ctx.fillStyle = on ? '#1f9a55' : 'rgba(255,255,255,.2)'; rr(b.x + 16, b.y + 22, 30, 30, 8);
+    ctx.fillStyle = on ? '#659775' : 'rgba(255,255,255,.2)'; rr(b.x + 16, b.y + 22, 30, 30, 8);
     if (on) {
       ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
       ctx.beginPath(); ctx.moveTo(b.x + 23, b.y + 37); ctx.lineTo(b.x + 29, b.y + 44); ctx.lineTo(b.x + 40, b.y + 30); ctx.stroke();
@@ -167,7 +172,7 @@ export function drawQuiz(): void {
     const b = optRect(i);
     const done = q.picked >= 0, right = i === item.ok, chose = i === q.picked;
     const face = !done ? lin(0, b.y, 0, b.y + b.h, [[0, '#ffffff'], [1, '#d5dae8']])
-      : right ? lin(0, b.y, 0, b.y + b.h, [[0, '#7fe0a4'], [1, '#1f9a55']])
+      : right ? lin(0, b.y, 0, b.y + b.h, [[0, '#7fe0a4'], [1, '#659775']])
         : chose ? lin(0, b.y, 0, b.y + b.h, [[0, '#ff8a7e'], [1, '#b81a12']])
           : 'rgba(255,255,255,.25)';
     ctx.fillStyle = '#0f1230'; rr(b.x, b.y + 5, b.w, b.h, 16);
@@ -250,9 +255,10 @@ export function uiPress(x: number, y: number): boolean {
   if (inHudHome(x, y)) { goHome(); return true; }
   if (inCircle(HUD_SOUND, x, y)) { toggleSound(); return true; }
   if (g.state === 'result' && !g.ok) {
-    if (inCircle(LESSON_REPLAY, x, y)) { g.st = 0; speak(g.game.tip); }
+    if (g.st < g.effectDur) return true;
+    if (inCircle(LESSON_REPLAY, x, y)) { g.st = g.effectDur; speak(g.game.tip); }
     else if (canSpeak() && inCircle(SPEAK_BTN, x, y)) speak(g.game.tip);
-    else if (g.st >= 3 && inCircle(LESSON_CONTINUE, x, y)) afterResult();
+    else if (g.st >= g.effectDur + 3 && inCircle(LESSON_CONTINUE, x, y)) afterResult();
     return true;
   }
   return false;

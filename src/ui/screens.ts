@@ -13,24 +13,26 @@ import { bayraa } from '../art/bayraa';
 import { ger } from '../art/props';
 import { sun, cloud, ridge, hills, grass, chimneySmoke, vignette, grain } from '../art/scenery';
 import { g } from '../flow';
+import { drawConsequence } from './consequences';
 
 export function render(): void {
   ctx.save();
   ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip();
-  if (g.state === 'title') { drawTitle(); vignette(0.3); grain(); }
+  if (g.state === 'title') { drawTitle(); vignette(0.12); }
   else if (g.state === 'cards') drawCards();
   else if (g.state === 'topics') drawTopics();
   else if (g.state === 'practice') drawPractice();
   else {
     g.game.draw();
     vignette();
-    grain();
+    if (g.state === 'play') g.game.danger?.();
     hud();
     if (g.state === 'play') drawPlay();
     else if (g.state === 'result') drawResult();
     else if (g.state === 'quiz') drawQuiz();
     else drawOver();
   }
+  grain();
   ctx.restore();
 }
 
@@ -59,7 +61,6 @@ function hud(): void {
 }
 
 function drawPlay(): void {
-  g.game.hint?.();
   const f = 1 - g.frac, bw = W - 32;
   ctx.fillStyle = 'rgba(27,31,59,.5)'; rr(16, 616, bw, 12, 6);
   ctx.fillStyle = f < 0.3 ? lin(0, 616, 0, 628, [[0, '#ff6a5c'], [1, '#b81a12']]) : goldFace(616, 628);
@@ -88,10 +89,21 @@ function drawResult(): void {
     return;
   }
   ctx.fillStyle = 'rgba(27,31,59,.62)'; ctx.fillRect(0, 0, W, H);
+  if (g.st < g.effectDur) {
+    drawConsequence(g.game.cmd, 18, 158, 324, 288, g.st, g.msg);
+    return;
+  }
   text('ХАМТДАА СУРЪЯ', W / 2, 126, 26, '#fff');
-  drawLesson(g.game.cmd, 18, 158, 324, 288, g.st);
+  // Fade the frozen final consequence into the safe action, without motion
+  // or a sudden replacement of the scene. The lesson still gets its full time.
+  const lessonTime = g.st - g.effectDur;
+  const blend = reduce ? 1 : Math.min(1, lessonTime / .25);
+  if (blend < 1) drawConsequence(g.game.cmd, 18, 158, 324, 288, g.effectDur, g.msg);
+  ctx.save(); ctx.globalAlpha = blend;
+  drawLesson(g.game.cmd, 18, 158, 324, 288, g.st - g.effectDur);
+  ctx.restore();
   lessonButton(LESSON_REPLAY.x, LESSON_REPLAY.y, LESSON_REPLAY.r, true);
-  ctx.save(); ctx.globalAlpha = g.st >= 3 ? 1 : 0.3;
+  ctx.save(); ctx.globalAlpha = g.st >= g.effectDur + 3 ? 1 : 0.3;
   lessonButton(LESSON_CONTINUE.x, LESSON_CONTINUE.y, LESSON_CONTINUE.r, false);
   ctx.restore();
   if (canSpeak()) soundIcon(SPEAK_BTN.x, SPEAK_BTN.y, SPEAK_BTN.r, true);

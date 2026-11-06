@@ -1,3 +1,4 @@
+import { dangerZone } from '../art/danger';
 import { ctx, W, H, layer } from '../core/canvas';
 import { lin, rr, seg, circ, dist } from '../core/draw';
 import { ctl } from '../core/ctl';
@@ -50,6 +51,7 @@ export class Seatbelt implements Micro {
     highlight(BUCKLE.x, BUCKLE.y, 25);
     if (!this.drag) highlight(this.x, this.y, 26);
   }
+  danger(): void { if (!this.fastened && !this.dead) dangerZone(300, 315, 0, 0); }
   draw(): void {
     layer('seatbelt-car', () => {
       ctx.fillStyle = '#526474'; ctx.fillRect(0, 0, W, H);
@@ -59,7 +61,11 @@ export class Seatbelt implements Micro {
       ctx.fillStyle = '#1c2c39'; ctx.fillRect(0, 590, W, H - 590);
     });
     boosterSeat(180, 447, 1);
-    bayraa(180, 505, 1.6, { mood: this.fastened ? 'happy' : this.dead ? 'scared' : 'ok', noShadow: true });
+    // Hips meet the cushion at y447; knees project forward and feet hang below.
+    bayraa(180, 469, 1.6, { mood: this.fastened ? 'happy' : this.dead ? 'scared' : 'ok', noShadow: true, seated: true });
+    // Armrests overlap the sitter at the sides, placing the child inside the seat.
+    ctx.fillStyle = '#283b55'; rr(95, 416, 23, 43, 8); rr(242, 416, 23, 43, 8);
+    ctx.fillStyle = '#7493a6'; rr(96, 414, 22, 10, 5); rr(242, 414, 22, 10, 5);
     ctx.strokeStyle = '#16232c'; ctx.lineWidth = 11; ctx.lineCap = 'round';
     seg(112, 385, this.fastened ? BUCKLE.x : this.x, this.fastened ? BUCKLE.y : this.y);
     if (this.fastened) seg(139, 451, BUCKLE.x, BUCKLE.y);

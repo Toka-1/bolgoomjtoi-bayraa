@@ -1,3 +1,4 @@
+import { dangerZone, heatWaves } from '../art/danger';
 import { ctx, W, H, layer } from '../core/canvas';
 import { lin, rr, dist, seg } from '../core/draw';
 import { ctl } from '../core/ctl';
@@ -35,6 +36,7 @@ export class Drink implements Micro {
     if (this.dead) this.spill = Math.min(1, this.spill + dt * 2);
   }
   hint(): void { if (!this.safe && !this.dead) highlight(60, 420, 46); }
+  danger(): void { if (!this.safe && !this.dead) { dangerZone(243, 350, 54, 48, 'heat'); heatWaves(245, 347, 45); } }
   draw(): void {
     layer('hot-drink-room', () => {
       ctx.fillStyle = lin(0, 0, 0, H, [[0, '#e6d3bb'], [1, '#faf0da']]); ctx.fillRect(0, 0, W, H);

@@ -6,5 +6,12 @@ html, body {
   height: 100%; margin: 0; background: var(--ink); color-scheme: dark; overflow: hidden;
   touch-action: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent;
 }
-canvas { display: block; width: 100%; height: 100%; outline: none; }
+canvas {
+  display: block; position: fixed;
+  left: env(safe-area-inset-left, 0px); top: env(safe-area-inset-top, 0px);
+  width: calc(100% - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
+  height: calc(100% - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  outline: none; touch-action: none;
+}
 canvas:focus-visible { outline: 3px solid var(--gold); outline-offset: -3px; }

@@ -11,6 +11,9 @@ import { g, step, debugStart, debugScreen } from './flow';
 import { render } from './ui/screens';
 
 addEventListener('resize', resize);
+// Observe the actual drawing surface when browser chrome or safe areas change.
+if (typeof ResizeObserver !== 'undefined') new ResizeObserver(resize).observe(cv);
+window.visualViewport?.addEventListener('resize', resize);
 resize();
 
 // Canvas text does not trigger webfont loading; ask for every weight and the Mongolian letters up front.

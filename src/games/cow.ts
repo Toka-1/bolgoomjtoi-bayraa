@@ -1,3 +1,4 @@
+import { dangerZone } from '../art/danger';
 import { gesture, highlight } from '../ui/gesture';
 import { ctx, W, H, clock, reduce, layer } from '../core/canvas';
 import { lin, rad, rr, seg, C, circ } from '../core/draw';
@@ -46,6 +47,7 @@ export class Cow implements Micro {
     if (isDown) this.brakeKeys.add(k); else this.brakeKeys.delete(k);
     this.syncBrake();
   }
+  danger(): void { if (!this.dead && this.cowY < CAR_Y + 50) dangerZone(COW_X - 30, this.cowY - 52, 86, 56); }
   draw(): void {
     layer('cow-road', paintRoad);
     flag(345, 380);
@@ -66,7 +68,7 @@ function flag(x: number, y: number): void {
 }
 
 function paintRoad(): void {
-  ctx.fillStyle = lin(0, 0, 0, 360, [[0, '#4fa6e6'], [0.7, '#a8d8f6'], [1, '#e2f3fc']]); ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = lin(0, 0, 0, 360, [[0, '#9ac5d4'], [0.7, '#a8d8f6'], [1, '#e2f3fc']]); ctx.fillRect(0, 0, W, H);
   sun(70, 120, 20, '#fff4c4', '255,240,190', 0.5);
   cloud(250, 110, 0.9, 1, 2); cloud(110, 190, 0.6, 0.85, 6); cloud(320, 230, 0.45, 0.7, 9);
   ridge(330, 110, 31, [[0, '#8ca3c8'], [1, '#a9bdd8']], 0.3);
@@ -85,7 +87,7 @@ function paintRoad(): void {
   ctx.fillStyle = '#f2f2ee'; for (let x = 0; x < W; x += 40) rr(x, 438, 22, 4, 1);
   ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fillRect(0, 403, W, 1.5); ctx.fillRect(0, 475, W, 1.5);
   // foreground steppe
-  ctx.fillStyle = lin(0, 484, 0, H, [[0, '#86ba4a'], [1, '#5d9530']]); ctx.fillRect(0, 484, W, H - 484);
+  ctx.fillStyle = lin(0, 484, 0, H, [[0, '#9cb886'], [1, '#7d9b68']]); ctx.fillRect(0, 484, W, H - 484);
   mottle(0, 490, W, 150, 19, '40,80,10', 30, 0.15);
   grass(492, H, 120, 3, 'rgba(50,90,20,.7)', 'rgba(180,220,110,.7)');
   // cattle warning sign

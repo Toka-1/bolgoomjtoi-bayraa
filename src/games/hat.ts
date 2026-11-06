@@ -1,3 +1,4 @@
+import { dangerZone } from '../art/danger';
 import { gesture, highlight } from '../ui/gesture';
 import { ctx, W, H, clock, layer } from '../core/canvas';
 import { lin, rad, rr, circ, seg, text, rand, dist, C } from '../core/draw';
@@ -49,6 +50,7 @@ export class Hat implements Micro {
     if (this.drag) highlight(AVATAR.x, HEAD_Y, 55);
     else gesture(this.hx, this.hy - 14, AVATAR.x, HEAD_Y - 14, 45);
   }
+  danger(): void { if (!this.on && !this.dead) dangerZone(24, 380, 58, 88, 'cold'); }
   draw(): void {
     layer('hat-steppe', paintSteppe);
     const cold = this.on ? 0 : ctl.playing ? ctl.frac : this.dead ? 1 : 0;
@@ -61,10 +63,6 @@ export class Hat implements Micro {
     }
     bayraa(AVATAR.x, AVATAR.y, AVATAR.scale, { hat: this.on ? 'winter' : false, shiver: !this.on, frozen, mood: this.dead ? 'dead' : this.on ? 'happy' : 'scared' });
     if (!this.on) {
-      if (this.drag) {
-        ctx.strokeStyle = C.gold; ctx.lineWidth = 3; ctx.setLineDash([6, 5]);
-        ctx.beginPath(); ctx.arc(AVATAR.x, HEAD_Y, 55, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
-      }
       if (this.drag) { ctx.fillStyle = 'rgba(10,20,40,.18)'; circ(this.hx + 6, this.hy + 16, 24); }
       winterHat(this.hx, this.hy, AVATAR.scale);
     }

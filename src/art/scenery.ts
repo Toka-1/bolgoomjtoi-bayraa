@@ -1,12 +1,11 @@
-import { ctx, W, H, clock, reduce, sprite, view } from '../core/canvas';
+import { ctx, W, H, clock, sprite } from '../core/canvas';
 import { lin, rad, circ, seg, rand, TAU, type Stops } from '../core/draw';
 import { rng } from '../core/rng';
 
 /* ---------- sky ---------- */
 export function sun(x: number, y: number, r: number, core: string, rgb: string, haloA = 0.45): void {
-  ctx.fillStyle = rad(x, y, r * 5, [[0, `rgba(${rgb},${haloA})`], [0.25, `rgba(${rgb},${haloA * 0.35})`], [1, `rgba(${rgb},0)`]]);
-  circ(x, y, r * 5);
-  ctx.fillStyle = rad(x, y, r, [[0, '#fffef5'], [0.6, core], [1, core]]);
+  ctx.fillStyle = `rgba(${rgb},${haloA * .12})`; circ(x, y, r * 1.4);
+  ctx.fillStyle = core;
   circ(x, y, r);
 }
 
@@ -38,7 +37,9 @@ export function ridge(base: number, height: number, seed: number, stops: Stops, 
   for (const [x, y] of pts) ctx.lineTo(x, y);
   ctx.lineTo(W + 4, H); ctx.closePath();
   ctx.fillStyle = lin(0, base - height, 0, base + 40, stops);
+  ctx.save(); ctx.shadowColor = 'rgba(48,60,70,.16)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 3;
   ctx.fill();
+  ctx.restore();
   if (snow > 0) {
     const cap = base - height * (1 - snow);
     ctx.beginPath();
@@ -57,7 +58,7 @@ export function ridge(base: number, height: number, seed: number, stops: Stops, 
   ctx.beginPath(); ctx.moveTo(-4, H);
   for (const [x, y] of pts) ctx.lineTo(x, y);
   ctx.lineTo(W + 4, H); ctx.closePath(); ctx.clip();
-  ctx.fillStyle = 'rgba(20,30,60,.12)';
+  ctx.fillStyle = 'rgba(67,68,85,.045)';
   for (let i = 1; i < pts.length - 1; i++) {
     const [x, y] = pts[i];
     if (pts[i - 1][1] > y && pts[i + 1][1] >= y) {
@@ -73,7 +74,9 @@ export function hills(y: number, amp: number, freq: number, ph: number, stops: S
   for (let x = 0; x <= W; x += 6) ctx.lineTo(x, y + Math.sin(x * freq + ph) * amp + Math.sin(x * freq * 2.7 + ph * 2) * amp * 0.3);
   ctx.lineTo(W, H); ctx.closePath();
   ctx.fillStyle = lin(0, y - amp, 0, y + depth, stops);
+  ctx.save(); ctx.shadowColor = 'rgba(48,60,70,.16)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 3;
   ctx.fill();
+  ctx.restore();
 }
 
 /** Grass tufts scattered in a band; nearer (lower) tufts are larger. */
@@ -184,18 +187,19 @@ export function chimneySmoke(x: number, y: number, s = 1, rgb = '235,235,240', a
 }
 
 /* ---------- post ---------- */
-export function vignette(a = 0.38): void {
+export function vignette(a = 0.12): void {
   ctx.fillStyle = rad(W / 2, H * 0.46, H * 0.78, [[0, 'rgba(10,12,30,0)'], [0.55, 'rgba(10,12,30,0)'], [1, `rgba(10,12,30,${a})`]]);
   ctx.fillRect(0, 0, W, H);
 }
 
 let grainPat: CanvasPattern | null = null;
-export function grain(a = 0.05): void {
+export function grain(a = 0.035): void {
   if (!grainPat) {
     const img = sprite('grain', 160, 160, c => {
       const d = c.createImageData(160, 160);
+      const random = rng(417);
       for (let i = 0; i < d.data.length; i += 4) {
-        const v = Math.random() * 255;
+        const v = random(70, 230);
         d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 255;
       }
       c.putImageData(d, 0, 0);
@@ -203,11 +207,11 @@ export function grain(a = 0.05): void {
     grainPat = ctx.createPattern(img, 'repeat');
   }
   if (!grainPat) return;
-  const ox = reduce ? 0 : Math.floor(Math.random() * 160), oy = reduce ? 0 : Math.floor(Math.random() * 160);
-  grainPat.setTransform(new DOMMatrix().scale(1 / view.scale).translate(ox, oy));
+  // Fibres stay attached to the artwork instead of flickering like film noise.
+  grainPat.setTransform(new DOMMatrix());
   ctx.save();
   ctx.globalAlpha = a;
-  ctx.globalCompositeOperation = 'overlay';
+  ctx.globalCompositeOperation = 'multiply';
   ctx.fillStyle = grainPat;
   ctx.fillRect(0, 0, W, H);
   ctx.restore();

@@ -18,7 +18,9 @@ export interface Micro {
   cancelInput?(): void;
   readonly keys?: string;
   draw(): void;
-  /** Optional demonstration overlay, shown only during first-time practice. */
+  /** Hazard cues during play; cosmetic only and separate from action hints. */
+  danger?(): void;
+  /** Highlights the action or destination needed during play. */
   hint?(): void;
   down?(x: number, y: number): void;
   /** Right-click toggles mouse selection; returns whether the object is held. */

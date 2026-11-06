@@ -1,3 +1,4 @@
+import { dangerZone } from '../art/danger';
 import { ctx, W, H, layer } from '../core/canvas';
 import { lin, rr, seg } from '../core/draw';
 import { ctl } from '../core/ctl';
@@ -24,6 +25,7 @@ export class Balcony implements Micro {
   key(k: string, down: boolean): void { if (down && k === 'ArrowLeft') this.down(65, 460); }
   resultUpdate(dt: number): void { if (this.safe) this.walk = Math.min(1, this.walk + dt * 1.3); }
   hint(): void { if (!this.safe && !this.dead) highlight(65, 450, 48); }
+  danger(): void { if (!this.safe && !this.dead) dangerZone(177, 385, 175, 119); }
   draw(): void {
     layer('balcony-home', () => {
       ctx.fillStyle = lin(0, 0, 0, H, [[0, '#9bcde9'], [1, '#e2f0fa']]); ctx.fillRect(0, 0, W, H);

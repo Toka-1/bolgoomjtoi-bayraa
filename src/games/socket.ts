@@ -1,10 +1,12 @@
+import { dangerZone } from '../art/danger';
+import { perspectiveFloor, solidBox } from '../art/depth';
 import { ctx, W, H, clock, reduce, layer } from '../core/canvas';
 import { lin, rad, rr, seg, circ, text, dist, shadow, glow } from '../core/draw';
 import { ctl } from '../core/ctl';
 import { sfx } from '../core/audio';
 import { rng } from '../core/rng';
 import { bayraa } from '../art/bayraa';
-import { planks, skirting, mottle } from '../art/scenery';
+import { skirting, mottle } from '../art/scenery';
 import type { Micro } from './types';
 import { DragKeys } from '../core/dragKeys';
 import { stopHint } from '../ui/gesture';
@@ -75,6 +77,7 @@ export class Socket implements Micro {
     if (this.drag >= 0) { this.move(x, y); this.up(); } else this.down(x, y);
     return this.drag >= 0;
   }
+  danger(): void { if (!this.dead) dangerZone(196, 427, 58, 57, 'electric'); }
   draw(): void {
     layer('socket-insertion-room', paintRoom);
     for (let i = 0; i < this.items.length; i++) if (i !== this.drag && i !== this.inserted) metal(this.items[i], false);
@@ -133,7 +136,11 @@ function paintRoom(): void {
   mottle(0, 0, W, 500, 31, '60,90,70', 40, 0.05);
   ctx.fillStyle = lin(0, 0, 0, 70, [[0, 'rgba(30,50,40,.25)'], [1, 'rgba(30,50,40,0)']]); ctx.fillRect(0, 0, W, 70);
   skirting(500);
-  planks(500, H, 180, 15, '#c48e5c', '#86592f');
+  perspectiveFloor(500, '#bc8a59');
+  // A shallow return wall and raised plate establish the wall/floor junction.
+  ctx.fillStyle = '#a9c0ad';
+  ctx.beginPath(); ctx.moveTo(335, 0); ctx.lineTo(W, 0); ctx.lineTo(W, 524); ctx.lineTo(335, 500); ctx.closePath(); ctx.fill();
+  solidBox(OUTLET.x - 24, OUTLET.y - 24, 48, 48, 5, '#d4d9d9', '#fff9ec', '#8b9996');
   // socket plate
   ctx.save(); ctx.translate(OUTLET.x, OUTLET.y); ctx.scale(0.6, 0.6); ctx.translate(-250, -300);
   shadow(253, 337, 40, 6, 0.25);

@@ -1,3 +1,4 @@
+import { dangerZone } from '../art/danger';
 import { ctx, W, H, layer } from '../core/canvas';
 import { lin, rr, dist } from '../core/draw';
 import { ctl } from '../core/ctl';
@@ -27,6 +28,7 @@ export class Dog implements Micro {
   key(k: string, down: boolean): void { if (down && k === 'ArrowLeft') this.down(62, 470); }
   resultUpdate(dt: number): void { if (this.safe) this.walk = Math.min(1, this.walk + dt); }
   hint(): void { if (!this.safe && !this.dead) highlight(62, 452, 47); }
+  danger(): void { if (!this.safe && !this.dead) dangerZone(214, 488, 118, 77); }
   draw(): void {
     layer('dog-courtyard', () => {
       ctx.fillStyle = lin(0, 0, 0, H, [[0, '#8ac9ed'], [1, '#e6f3f9']]); ctx.fillRect(0, 0, W, H);

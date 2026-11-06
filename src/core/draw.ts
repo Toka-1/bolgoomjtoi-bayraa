@@ -7,7 +7,7 @@ export const TAU = Math.PI * 2;
 export const FONT = '"Rubik", system-ui, sans-serif';
 
 export const C = {
-  ink: '#1b1f3b', gold: '#f4b400', deel: '#2856c9', deel2: '#1d3f99', sash: '#f28c1b', red: '#e5332a',
+  ink: '#393340', gold: '#e8b653', deel: '#5379ab', deel2: '#405b80', sash: '#db9955', red: '#cf4b43',
   skin: '#f0c39a', cheek: '#e8786a', hair: '#22180f', snow: '#f4f8fc', ice: '#a8e4ff', felt: '#f7f1e3',
   wood: '#b5713a', steppe: '#9ccc5a', steppe2: '#7cb342', sky: '#8fd0f5',
 } as const;
@@ -31,15 +31,34 @@ export function seg(x1: number, y1: number, x2: number, y2: number): void {
 }
 
 /* ---------- gradients ---------- */
+/** Pigment colours mixed with warm paper; dark ink and warning reds stay clear. */
+function pigment(color: string): string {
+  if (!/^#[0-9a-f]{6}$/i.test(color)) return color;
+  const channels = [1, 3, 5].map(i => parseInt(color.slice(i, i + 2), 16));
+  if (Math.max(...channels) < 90) return color;
+  return `rgb(${channels.map((v, i) => Math.round(v * .86 + [248, 239, 219][i] * .14)).join(',')})`;
+}
+function matte(stops: Stops): string | null {
+  if (!stops.every(([, c]) => /^#[0-9a-f]{6}$/i.test(c))) return null;
+  const a = stops.reduce((last, stop) => stop[0] <= .5 ? stop : last, stops[0]);
+  const b = stops.find(stop => stop[0] >= .5) ?? stops[stops.length - 1];
+  const t = b[0] === a[0] ? 0 : (.5 - a[0]) / (b[0] - a[0]);
+  const rgb = [1, 3, 5].map(i => Math.round(parseInt(a[1].slice(i, i + 2), 16) * (1 - t) + parseInt(b[1].slice(i, i + 2), 16) * t));
+  return pigment('#' + rgb.map(v => v.toString(16).padStart(2, '0')).join(''));
+}
 export function lin(x0: number, y0: number, x1: number, y1: number, stops: Stops): CanvasGradient {
   const g = ctx.createLinearGradient(x0, y0, x1, y1);
-  for (const [o, c] of stops) g.addColorStop(o, c);
+  const flat = Math.hypot(x1 - x0, y1 - y0) < 180 ? matte(stops) : null;
+  if (flat) { g.addColorStop(0, flat); g.addColorStop(1, flat); }
+  else for (const [o, c] of stops) g.addColorStop(o, pigment(c));
   return g;
 }
 /** Radial gradient; the inner circle may be offset (hx, hy) for a highlight look. */
 export function rad(x: number, y: number, r: number, stops: Stops, hx = x, hy = y, r0 = 0): CanvasGradient {
   const g = ctx.createRadialGradient(hx, hy, r0, x, y, r);
-  for (const [o, c] of stops) g.addColorStop(o, c);
+  const flat = matte(stops);
+  if (flat) { g.addColorStop(0, flat); g.addColorStop(1, flat); }
+  else for (const [o, c] of stops) g.addColorStop(o, c);
   return g;
 }
 
@@ -47,7 +66,7 @@ export function rad(x: number, y: number, r: number, stops: Stops, hx = x, hy = 
 export function shadow(x: number, y: number, rx: number, ry: number, a = 0.35): void {
   ctx.save();
   ctx.translate(x, y); ctx.scale(1, ry / rx);
-  ctx.fillStyle = rad(0, 0, rx, [[0, `rgba(10,12,30,${a})`], [0.6, `rgba(10,12,30,${a * 0.5})`], [1, 'rgba(10,12,30,0)']]);
+  ctx.fillStyle = 'rgba(94,72,60,' + a * .42 + ')';
   circ(0, 0, rx);
   ctx.restore();
 }

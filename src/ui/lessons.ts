@@ -4,9 +4,11 @@ import { bayraa, winterHat } from '../art/bayraa';
 import { baby, cradle, stove, car, cow, ger } from '../art/props';
 import { caregiver, noSwimmingSign } from '../art/safety';
 import { dog, hotCup, manhole, cleaningBottle, boosterSeat } from '../art/hazards';
+import { reversingCar, damagedCord, snowRoof, icicle } from '../art/prevention';
 
 /** A self-contained safe-action demonstration. Never advances or changes a live game. */
 export const LESSONS: Record<string, string> = {
+  'МАШИНЫ АРААС ХОЛД!': 'reversing', 'ЭВДЭРСЭН УТАСНААС ХОЛД!': 'cord', 'ДЭЭВРЭЭС ХОЛД!': 'icicles',
   'ГАДАГШ ГАР!': 'smoke', 'ТЭНЦВЭРЭЭ БАРИ!': 'ice', 'БИТГИЙ ХҮР!': 'socket',
   'МАЛГАЙГАА ӨМС!': 'hat', 'МАЛЫГ ХҮЛЭЭ!': 'cow', 'ХҮҮХДИЙГ ХАМГААЛ!': 'baby',
   'НОГООНЫГ ХҮЛЭЭ!': 'crossing', 'ГЭРТЭЭ ОР!': 'dust', 'ШҮҮГЭЭНД ХИЙ!': 'cabinet',
@@ -52,19 +54,41 @@ function lock(x: number, y: number): void {
 export function drawLesson(cmd: string, x: number, y: number, w: number, h: number, elapsed: number): void {
   const kind = LESSONS[cmd];
   const t = reduce ? 1 : Math.min(1, Math.max(0, elapsed) / 2.8);
-  const p = t * t * (3 - 2 * t);
-  ctx.save(); ctx.translate(x, y); ctx.scale(w / 320, h / 240);
-  ctx.beginPath(); ctx.roundRect(0, 0, 320, 240, 16); ctx.clip();
+  const action = Math.min(1, Math.max(0, (t - .1) / .7));
+  const p = action * action * (3 - 2 * action);
+  const phase = (start: number, duration: number) => { const v = Math.min(1, Math.max(0, (t - start) / duration)); return v * v * (3 - 2 * v); };
+  // Fit the illustration without stretching people or circular props.
+  const scale = Math.min(w / 320, h / 240);
+  ctx.save(); ctx.translate(x, y);
+  ctx.beginPath(); ctx.roundRect(0, 0, w, h, 16); ctx.clip();
+  ctx.fillStyle = '#e9f3ff'; ctx.fillRect(0, 0, w, h);
+  ctx.translate((w - 320 * scale) / 2, (h - 240 * scale) / 2); ctx.scale(scale, scale);
   ctx.fillStyle = '#e9f3ff'; ctx.fillRect(0, 0, 320, 240);
   ctx.fillStyle = '#d1e5c7'; ctx.fillRect(0, 190, 320, 50);
   switch (kind) {
+    case 'reversing':
+      ctx.fillStyle = '#b4b8b3'; rr(170, 160, 150, 80, 0);
+      reversingCar(225, 222, 2.1);
+      caregiver(43, 217, 1.05);
+      bayraa(174 - p * 59, 222, .85, { mood: 'happy' });
+      break;
+    case 'cord':
+      damagedCord(245, 202, .65);
+      caregiver(43, 217, 1.05);
+      bayraa(161 - p * 46, 222, .85, { mood: 'happy', arms: p * .5 });
+      break;
+    case 'icicles':
+      snowRoof(187, 35, 120); icicle(272, 50, 56);
+      caregiver(43, 217, 1.05);
+      bayraa(176 - p * 61, 222, .85, { mood: 'happy', hat: 'winter' });
+      break;
     case 'seatbelt':
       boosterSeat(160, 180, 0.7);
-      bayraa(160, 220, 1.1, { mood: 'happy', noShadow: true });
+      bayraa(160, 195, 1.1, { mood: 'happy', noShadow: true, seated: true });
       ctx.strokeStyle = '#23394b'; ctx.lineWidth = 7;
-      seg(104, 155, 104 + p * 101, 165 + p * 18);
-      if (t > 0.8) seg(135, 183, 205, 183);
-      ctx.fillStyle = '#d34e42'; rr(196, 177, 18, 18, 4);
+      seg(132, 128, 108 + p * 80, 150 + p * 33);
+      if (t > .8) seg(137, 183, 188, 183);
+      ctx.fillStyle = '#d34e42'; rr(180, 177, 16, 16, 4);
       break;
     case 'balcony':
       ctx.fillStyle = '#dfc49b'; rr(5, 30, 115, 200, 4);
@@ -75,24 +99,29 @@ export function drawLesson(cmd: string, x: number, y: number, w: number, h: numb
       caregiver(49, 218, 1.05);
       bayraa(225 - p * 112, 226, 0.95, { mood: 'happy' });
       break;
-    case 'cleaner':
-      caregiver(48, 220, 1.1);
-      ctx.fillStyle = '#a87b4e'; rr(150, 82, 151, 138, 5);
-      ctx.fillStyle = '#514536'; rr(158, 90, 135, 122, 3);
-      cleaningBottle(201, 207, 0.8); cleaningBottle(257, 207, 0.7);
-      baby(110, 236, 0);
-      if (t > 0.4) { ctx.fillStyle = '#c99a68'; rr(153, 85, 145 * p, 132, 4); }
-      if (t > 0.85) lock(277, 143);
+    case 'cleaner': {
+      caregiver(48, 222, 1.2);
+      ctx.fillStyle = '#a87b4e'; rr(150, 142, 151, 78, 5);
+      ctx.fillStyle = '#d6dbd2'; rr(146, 130, 159, 13, 4);
+      ctx.fillStyle = '#8198a0'; ell(225, 128, 36, 5);
+      ctx.fillStyle = '#514536'; rr(158, 150, 135, 62, 3);
+      cleaningBottle(201, 207, .65); cleaningBottle(257, 207, .6);
+      baby(112, 230, 0);
+      const edge = 153 - 30 * (1 - p) + 145 * p;
+      ctx.fillStyle = '#c99a68'; ctx.beginPath(); ctx.moveTo(153, 146);
+      ctx.lineTo(edge, 146 + 10 * (1 - p)); ctx.lineTo(edge, 218 + 10 * (1 - p)); ctx.lineTo(153, 218); ctx.closePath(); ctx.fill();
+      if (t > .85) lock(277, 178);
       break;
+    }
     case 'dog':
       caregiver(49, 219, 1.05);
-      dog(267, 216, 0.68);
-      bayraa(170 - p * 55, 222, 0.95, { mood: 'happy' });
+      ctx.save(); ctx.translate(267, 216); ctx.scale(-1, 1); dog(0, 0, .68); ctx.restore();
+      bayraa(170 - p * 42, 222, 0.95, { mood: 'happy' });
       break;
     case 'drink':
-      caregiver(49, 222, 1.1);
+      caregiver(49 + p * 93, 205, 1.1);
       ctx.fillStyle = '#a6794b'; rr(128, 138, 173, 13, 4); rr(137, 151, 10, 70, 2); rr(282, 151, 10, 70, 2);
-      hotCup(265 - p * 85, 138, 0.8);
+      hotCup(265 - p * 85, 138 - Math.sin(p * Math.PI) * 12, 0.8);
       baby(265, 230, 0);
       break;
     case 'manhole':
@@ -105,21 +134,24 @@ export function drawLesson(cmd: string, x: number, y: number, w: number, h: numb
       if (t < 1) winterHat(70 + p * 90, 60 + p * (218 - 101 * 1.35 - 60), 1.35);
       break;
     case 'baby':
-      stove(12, 133, 70, 65); cradle(218, 99, 90, 60);
-      bayraa(155, 220, 1.2, { mood: 'happy' });
-      baby(108 + p * 152, 208 - p * 75, 0, t < 0.05);
+      stove(12, 133, 70, 65);
+      ctx.fillStyle = '#b67b4d'; rr(218, 168, 90, 52, 4);
+      cradle(218, 135, 90, 35);
+      const lift = phase(.1, .2), carry = phase(.3, .35), place = phase(.65, .15);
+      bayraa(155 + carry * 70, 220, 1.2, { mood: 'happy', arms: .3 + place * .6 });
+      baby(108 + lift * 47 + carry * 105, 208 - lift * 22 - place * 31, 0, t < .1);
       break;
     case 'smoke':
-      ctx.fillStyle = '#c0d4e4'; rr(12, 20, 168, 172, 8);
-      ctx.fillStyle = '#71869a'; rr(30, 42, 50, 57, 3);
-      ctx.fillStyle = '#e9f9ff'; ctx.fillRect(34, 46, 42, 49);
-      ctx.strokeStyle = '#517b94'; ctx.lineWidth = 5; seg(55, 46, 55, 95); seg(34, 70, 76, 70);
-      ctx.fillStyle = '#7c5437'; rr(110, 86, 57, 106, 3);
-      ctx.fillStyle = '#b8e5ff'; rr(116, 92, 45, 100, 2);
-      ctx.globalAlpha = 0.5 * (1 - p); ctx.fillStyle = '#65707a';
+      ctx.fillStyle = '#dfcdb4'; rr(0, 0, 210, 222, 0);
+      stove(20, 149, 54, 48);
+      ctx.fillStyle = '#7c5437'; rr(205, 69, 69, 153, 3);
+      ctx.fillStyle = '#b8d8df'; rr(212, 76, 55, 146, 2);
+      ctx.fillStyle = '#a7bd8c'; rr(274, 190, 46, 50, 0);
+      ctx.save(); ctx.beginPath(); ctx.rect(0, 0, 205, 190); ctx.clip();
+      ctx.globalAlpha = .35 * (1 - p); ctx.fillStyle = '#65707a';
       for (let i = 0; i < 4; i++) ell(50 + i * 30, 120 - i * 17, 35, 22);
-      ctx.globalAlpha = 1;
-      bayraa(90 + p * 164, 222, 1.15, { mood: p > 0.5 ? 'happy' : 'scared' });
+      ctx.restore();
+      bayraa(112 + p * 162, 222, 1, { mood: p > .7 ? 'happy' : 'scared' });
       break;
     case 'ice':
       ctx.fillStyle = '#b9e6fa'; ell(160, 219, 130, 17);
@@ -128,14 +160,14 @@ export function drawLesson(cmd: string, x: number, y: number, w: number, h: numb
       for (let i = 0; i < 5; i++) ell(110 + i * 16, 224 + (i % 2) * 7, 4, 7);
       break;
     case 'socket':
-      ctx.fillStyle = '#fff'; rr(204, 63, 58, 58, 9);
-      ctx.fillStyle = C.ink; circ(224, 90, 4); circ(243, 90, 4);
-      bayraa(84, 218, 1.35, { mood: 'happy' });
-      // The metal object moves away; a protective cover closes over the socket.
-      ctx.strokeStyle = '#778da4'; ctx.lineWidth = 5;
-      const fx = 190 - p * 44;
-      seg(fx, 178, fx, 217); for (let i = -1; i <= 1; i++) seg(fx + i * 6, 170, fx + i * 6, 183);
-      ctx.globalAlpha = p; ctx.fillStyle = '#9fd1ed'; rr(207, 66, 52, 52, 8); lock(233, 87); ctx.globalAlpha = 1;
+      ctx.fillStyle = '#fff'; rr(225, 100, 49, 49, 7);
+      ctx.fillStyle = C.ink; circ(241, 124, 3); circ(258, 124, 3);
+      caregiver(43, 222, 1.05);
+      bayraa(166 - p * 48, 222, .85, { mood: 'happy', arms: p * .3 });
+      // Metal stays on the floor. The child leaves it alone and tells an adult.
+      ctx.strokeStyle = '#778da4'; ctx.lineWidth = 4;
+      seg(234, 195, 260, 209);
+      for (let i = -1; i <= 1; i++) seg(229, 191 + i * 4, 237, 195 + i * 3);
       break;
     case 'cow': {
       ctx.fillStyle = '#596578'; ctx.fillRect(0, 136, 320, 68);
@@ -151,7 +183,7 @@ export function drawLesson(cmd: string, x: number, y: number, w: number, h: numb
       ctx.fillStyle = C.ink; rr(244, 27, 46, 91, 8);
       ctx.fillStyle = t < 0.4 ? '#ee473f' : '#6b292d'; circ(267, 50, 14);
       ctx.fillStyle = t >= 0.4 ? '#43d477' : '#27533d'; circ(267, 93, 14);
-      bayraa(160, 228 - Math.max(0, (p - 0.35) / 0.65) * 110, 0.9, { mood: 'happy' });
+      bayraa(160, 228 - phase(.45, .35) * 110, .9 - phase(.45, .35) * .25, { mood: 'happy' });
       break;
     case 'dust':
       ger(235, 192, 1.05);
@@ -161,10 +193,15 @@ export function drawLesson(cmd: string, x: number, y: number, w: number, h: numb
       if (t < 0.95) bayraa(70 + p * 165, 220 - p * 28, 1.35 - p * 0.95, { mood: 'ok' });
       break;
     case 'cabinet':
-      cabinet(); bayraa(87, 218, 1.4, { mood: 'happy' });
-      ctx.fillStyle = '#e88c34'; rr(147 + p * 94, 191 - p * 136, 22, 30, 4);
-      ctx.fillStyle = '#fff'; rr(146 + p * 94, 185 - p * 136, 24, 8, 2);
-      if (t > 0.8) { ctx.fillStyle = '#c58a51'; rr(198, 22, 104, 114, 8); lock(274, 71); }
+      cabinet(); caregiver(54, 222, 1.2); baby(119, 232, 0);
+      for (let i = 0; i < 3; i++) {
+        const move = phase(.1 + i * .2, .18);
+        const ix = 151 + i * 25 + move * (225 + i * 23 - (151 + i * 25));
+        const iy = 204 - move * (i === 2 ? 93 : 150);
+        ctx.fillStyle = ['#c6894f', '#ece9df', '#a56c59'][i]; rr(ix, iy, 16, 23, 3);
+        ctx.fillStyle = '#7f969e'; rr(ix - 1, iy - 4, 18, 5, 2);
+      }
+      if (t > .78) { ctx.fillStyle = '#c58a51'; rr(198, 22, 104, 114, 8); lock(274, 71); }
       break;
     case 'river':
       ctx.fillStyle = '#4ba3cd'; ctx.fillRect(200, 166, 120, 74);

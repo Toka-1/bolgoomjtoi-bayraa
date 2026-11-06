@@ -7,7 +7,7 @@ export type Mood = 'ok' | 'dead' | 'scared' | 'happy';
 export interface BayraaOpts {
   rot?: number; shiver?: boolean; frozen?: boolean; green?: boolean;
   mood?: Mood; arms?: number; wave?: boolean; /** true = festive hat, 'winter' = fox-fur лоовууз with ear flaps */
-  hat?: boolean | 'winter'; noShadow?: boolean;
+  hat?: boolean | 'winter'; noShadow?: boolean; seated?: boolean;
 }
 
 type Skin = readonly [string, string, string];
@@ -29,7 +29,18 @@ export function bayraa(x: number, y: number, s = 1, o: BayraaOpts = {}): void {
     : look.outfit;
   const skin = o.frozen ? SKIN_FROZEN : o.green ? SKIN_SICK : SKIN;
 
-  boot(-1); boot(1);
+  if (o.seated) {
+    // Foreshortened thighs rest on the cushion; shins hang over its front edge.
+    for (const d of [-1, 1]) {
+      ctx.save(); ctx.scale(d, 1);
+      ctx.fillStyle = pal.dk; rr(5, -18, 18, 23, 6);
+      ctx.fillStyle = pal.md; ell(14, -13, 13, 8);
+      ctx.fillStyle = '#512b18'; rr(6, 3, 17, 18, 4);
+      ctx.fillStyle = '#7a4424'; rr(5, 15, 24, 11, 5);
+      ctx.fillStyle = '#28160e'; rr(5, 23, 24, 3, 1);
+      ctx.restore();
+    }
+  } else { boot(-1); boot(1); }
 
   // deel
   ctx.beginPath();
@@ -40,6 +51,7 @@ export function bayraa(x: number, y: number, s = 1, o: BayraaOpts = {}): void {
   ctx.closePath();
   ctx.fillStyle = lin(-28, 0, 28, 0, [[0, pal.lt], [0.42, pal.md], [1, pal.dk]]);
   ctx.fill();
+  ctx.strokeStyle = 'rgba(57,51,64,.3)'; ctx.lineWidth = 1.2; ctx.stroke();
   ctx.save(); ctx.clip();
   ctx.fillStyle = lin(0, -70, 0, -10, [[0, 'rgba(255,255,255,.10)'], [0.5, 'rgba(0,0,0,0)'], [1, 'rgba(0,0,30,.22)']]);
   ctx.fillRect(-30, -72, 60, 64);
@@ -59,7 +71,7 @@ export function bayraa(x: number, y: number, s = 1, o: BayraaOpts = {}): void {
   ctx.fillStyle = pal.trim; ctx.fillRect(-9, -65.5, 18, 1.2);
 
   // sash (бүс) with hanging tails
-  ctx.fillStyle = lin(0, -45, 0, -35, [[0, '#ffb757'], [0.5, C.sash], [1, '#bb5c0a']]);
+  ctx.fillStyle = lin(0, -45, 0, -35, [[0, '#e7b879'], [0.5, C.sash], [1, '#bb5c0a']]);
   rr(-23, -45, 46, 10, 3);
   ctx.fillStyle = lin(-18, 0, -9, 0, [[0, '#c9640c'], [1, '#f08a1e']]);
   ctx.beginPath(); ctx.moveTo(-15, -36); ctx.quadraticCurveTo(-19, -26, -17, -17); ctx.lineTo(-11, -18);
@@ -80,6 +92,7 @@ export function bayraa(x: number, y: number, s = 1, o: BayraaOpts = {}): void {
   }
   ctx.fillStyle = rad(0, -86, 24, [[0, skin[0]], [0.62, skin[1]], [1, skin[2]]], -7, -96, 2);
   circ(0, -86, 23);
+  ctx.strokeStyle = 'rgba(117,79,65,.25)'; ctx.lineWidth = 1.1; ctx.stroke();
 
   // hair
   ctx.fillStyle = lin(0, -112, 0, -82, [[0, '#3d2c1e'], [1, '#110b06']]);

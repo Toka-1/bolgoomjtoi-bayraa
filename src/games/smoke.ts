@@ -1,3 +1,4 @@
+import { dangerZone, heatWaves } from '../art/danger';
 import { gesture, highlightRect } from '../ui/gesture';
 import { ctx, W, H, clock, layer } from '../core/canvas';
 import { lin, rr, ell, seg, circ } from '../core/draw';
@@ -35,6 +36,7 @@ export class Smoke implements Micro {
     highlightRect(DOOR.x, DOOR.y, DOOR.w, DOOR.h);
     gesture(292, 390, 292, 390, 36);
   }
+  danger(): void { if (!this.open) { dangerZone(38, 345, 116, 158); heatWaves(44, 389, 98); } }
   draw(): void {
     if (this.exit >= 1) {
       ctx.fillStyle = lin(0, 0, 0, H, [[0, '#83c8ef'], [1, '#eef9ff']]); ctx.fillRect(0, 0, W, H);
@@ -104,6 +106,6 @@ function drawDoor(open: boolean): void {
   if (open) { ctx.fillStyle = '#ffe7a2'; circ(x + 65, y + 40, 15); }
   else {
     ctx.strokeStyle = '#f5c879'; ctx.lineWidth = 3; ctx.strokeRect(x + 12, y + 14, w - 24, h - 30);
-    ctx.fillStyle = '#f4b400'; circ(x + w - 18, y + h * 0.55, 5);
+    ctx.fillStyle = '#e8b653'; circ(x + w - 18, y + h * 0.55, 5);
   }
 }

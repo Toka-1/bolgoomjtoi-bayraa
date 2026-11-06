@@ -66,6 +66,8 @@ export function installInput(): () => void {
   cv.addEventListener('pointercancel', cancel);
   cv.addEventListener('lostpointercapture', cancel);
   addEventListener('blur', clear);
+  addEventListener('resize', clear);
+  globalThis.visualViewport?.addEventListener('resize', clear);
   cv.addEventListener('blur', clear);
   document.addEventListener('visibilitychange', () => { if (document.hidden) clear(); });
   addEventListener('keydown', e => {
@@ -84,7 +86,7 @@ export function installInput(): () => void {
     if (uiKey(e.key)) return;
     const activate = e.key === 'Enter' || e.key === ' ';
     if (activate && (g.state === 'title' || (g.state === 'over' && g.st > 0.6))) { clear(); startRun(); return; }
-    if (activate && g.state === 'result' && !g.ok && g.st >= 3) { clear(); afterResult(); return; }
+    if (activate && g.state === 'result' && !g.ok && g.st >= g.effectDur + 3) { clear(); afterResult(); return; }
     if (g.state !== 'play') return;
     if (!current()) clear();
     claim(); held.add(e.key); g.game.key?.(e.key, true);

@@ -1,3 +1,4 @@
+import { dangerZone } from '../art/danger';
 import { ctx, W, H, layer } from '../core/canvas';
 import { lin, seg, rr } from '../core/draw';
 import { ctl } from '../core/ctl';
@@ -32,6 +33,7 @@ export class Manhole implements Micro {
   key(k: string, down: boolean): void { if (down && k === 'ArrowLeft') this.down(65, 470); if (down && k === 'ArrowRight') this.down(295, 470); }
   resultUpdate(dt: number): void { if (this.fell) this.fall = Math.min(1, this.fall + dt); }
   hint(): void { if (!this.dead && !this.route) { highlight(65, 465, 32); highlight(295, 485, 32); } }
+  danger(): void { if (!this.dead && this.progress < 1) dangerZone(117, 429, 126, 71); }
   draw(): void {
     layer('manhole-pavement', () => {
       ctx.fillStyle = lin(0, 0, 0, H, [[0, '#a8cbe3'], [1, '#e6edf3']]); ctx.fillRect(0, 0, W, H);

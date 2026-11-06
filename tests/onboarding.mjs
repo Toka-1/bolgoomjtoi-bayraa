@@ -33,3 +33,9 @@ for(const [saved,blocked] of [['[]',false],['invalid JSON',false],['null',false]
 const survival=setup();survival.games[0].timeoutWin=true;survival.startPractice(0);survival.step(5);
 assert.equal(survival.g.ok,true);assert.equal(survival.g.score,0);assert.equal(survival.g.lives,3);
 console.log('Immediate gameplay and separate practice checks passed.');
+
+const failureSequence=setup();failureSequence.startPractice(0);failureSequence.ctl.lose('unsafe');
+assert.equal(failureSequence.narrations(),0,'no lesson narration over the consequence');
+failureSequence.step(2.3);assert.equal(failureSequence.narrations(),0);
+failureSequence.step(.2);assert.equal(failureSequence.narrations(),1,'lesson narration starts after consequence');
+failureSequence.step(10);assert.equal(failureSequence.narrations(),1,'narration starts only once');

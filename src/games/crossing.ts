@@ -1,3 +1,4 @@
+import { dangerZone } from '../art/danger';
 import { gesture, highlight, stopHint } from '../ui/gesture';
 import { ctx, W, H, clock, reduce, layer } from '../core/canvas';
 import { lin, rad, rr, circ, seg, text, rand, glow, C } from '../core/draw';
@@ -105,6 +106,7 @@ export class Crossing implements Micro {
   }
   key(k: string, isDown: boolean): void { if (isDown && (k === ' ' || k === 'ArrowUp' || k === 'Enter')) this.down(); }
 
+  danger(): void { if (!this.green && !this.walking) dangerZone(100, 405, 152, 66); }
   draw(): void {
     layer('crossing-street', paintStreet);
     chimneySmoke(72, 92, 0.8, '205,205,210', 0.45);

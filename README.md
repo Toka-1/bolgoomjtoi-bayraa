@@ -5,7 +5,7 @@ The important object or safe action has a bright gold-and-white outline, without
 directional arrows or moving trails. Red lights and electrical hazards use a stop
 hand pictogram. Reduced-motion mode keeps the highlights static.
 The separate ДАДЛАГА button on the title opens
-a picture menu for all 16 games. Choose any round to practise without losing
+a picture menu for all 19 games. Choose any round to practise without losing
 lives, gaining points or unlocking cards. A win returns to the practice menu;
 after a failure explanation, Continue retries the same practice round.
 
@@ -58,7 +58,7 @@ npm run build      # dist/ хавтас руу статик хувилбар г�
 npm run preview    # build хийсэн хувилбарыг шалгах
 ```
 
-Dev горимд `?g=0` … `?g=15` гэж нэмбэл тухайн мини тоглоом руу шууд орно.
+Dev горимд `?g=0` … `?g=18` гэж нэмбэл тухайн мини тоглоом руу шууд орно.
 
 ## Онцлог
 
@@ -83,3 +83,5 @@ Dev горимд: `?g=N` (N-р тоглоом), `&t=секунд` (урагш г
 - `public/`: PWA manifest, service worker, дүрсүүд
 
 Шинэ мини тоглоом нэмэх: `src/games/` дотор `Micro`-г хэрэгжүүлсэн класс бичээд `src/games/index.ts`-д нэм.
+
+Safety references for the added rounds: [NHTSA child safety](https://www.nhtsa.gov/road-safety/child-safety), [ESFI electrical safety](https://www.esfi.org/electrical-safety-dos/), and [winter ice safety](https://www.safety.af.mil/Divisions/Occupational-Safety-Division/Winter-Safety/Slips-Falls-on-Ice/).

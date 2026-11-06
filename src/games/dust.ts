@@ -1,3 +1,4 @@
+import { dangerZone } from '../art/danger';
 import { gesture } from '../ui/gesture';
 import { ctx, W, H, clock, reduce, layer } from '../core/canvas';
 import { lin, rad, circ, ell, seg, rr, shadow } from '../core/draw';
@@ -76,6 +77,7 @@ export class Dust implements Micro {
     gesture(SLOTS[i], HY - 22, SLOTS[i], HY - 22, 44);
   }
 
+  danger(): void { if (this.choice < 0) dangerZone(Math.max(6, Math.min(275, this.front)), 230, 76, 100, 'wind'); }
   draw(): void {
     layer('dust-gobi', paintGobi);
     const t = clock.t, frac = Math.min(1, this.t / 5);

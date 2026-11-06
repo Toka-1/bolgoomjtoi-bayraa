@@ -1,3 +1,4 @@
+import { dangerZone } from '../art/danger';
 import { gesture } from '../ui/gesture';
 import { ctx, W, H, reduce, layer } from '../core/canvas';
 import { lin, rad, ell, seg, rr, circ, C } from '../core/draw';
@@ -67,6 +68,7 @@ export class Ice implements Micro {
   }
   /** Point at the side to tap: opposite the lean. */
   hint(): void { if (!this.dead) { const x = this.a > 0 ? 70 : W - 70; gesture(x, 400, x, 400, 36); } }
+  danger(): void { if (!this.dead) dangerZone(115, 550, 130, 44, 'cold'); }
   draw(): void {
     layer('ice-city', paintCity);
     chimneySmoke(192, 18, 0.8, '200,200,208', 0.5);
@@ -88,12 +90,6 @@ export class Ice implements Micro {
     });
     if (!this.dead) meter(this.a, danger);
     snowfall(0.8);
-    // side hints: the side to tap glows as he tips over
-    if (!this.dead && danger > 0.3) {
-      const side = this.a > 0 ? -1 : 1, x = side < 0 ? 0 : W / 2;
-      ctx.fillStyle = lin(side < 0 ? 0 : W, 0, W / 2, 0, [[0, `rgba(244,180,0,${(danger - 0.3) * 0.5})`], [1, 'rgba(244,180,0,0)']]);
-      ctx.fillRect(x, 0, W / 2, H);
-    }
     if (this.push > 0) {
       ctx.fillStyle = `rgba(255,255,255,${this.push})`;
       circ(this.pushDir < 0 ? 60 : W - 60, 400, 40 * (1 - this.push * 3));
@@ -111,7 +107,7 @@ function meter(a: number, danger: number): void {
   ctx.lineWidth = 8;
   ctx.strokeStyle = '#4cd07a';
   ctx.beginPath(); ctx.arc(cx, cy, R, -Math.PI / 2 - span * 0.55, -Math.PI / 2 + span * 0.55); ctx.stroke();
-  ctx.strokeStyle = '#f4b400';
+  ctx.strokeStyle = '#e8b653';
   ctx.beginPath(); ctx.arc(cx, cy, R, -Math.PI / 2 - span * 0.8, -Math.PI / 2 - span * 0.55); ctx.stroke();
   ctx.beginPath(); ctx.arc(cx, cy, R, -Math.PI / 2 + span * 0.55, -Math.PI / 2 + span * 0.8); ctx.stroke();
   ctx.strokeStyle = C.red;

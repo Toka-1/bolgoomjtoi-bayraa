@@ -1,3 +1,4 @@
+import { dangerZone } from '../art/danger';
 import { gesture, highlight } from '../ui/gesture';
 import { ctx, W, H, clock, reduce, layer } from '../core/canvas';
 import { lin, rad, rr, circ, ell, seg, dist, shadow, C } from '../core/draw';
@@ -114,15 +115,12 @@ export class Cabinet implements Micro {
     if (it) gesture(it.x, it.y, CAB.x + CAB.w / 2, CAB.y + CAB.h / 2, 46);
   }
 
+  danger(): void { if (!this.dead) for (const [i, it] of this.items.entries()) if (!it.stored && i !== this.drag) dangerZone(it.x - 22, it.y - 24, 44, 46); }
   draw(): void {
     layer('cabinet-room-grounded', paintRoom);
     cabinetBody(this.door);
     for (const it of this.items) if (it.stored) item(it.kind, it.x, it.y, ITEM_SCALE);
     if (this.door > 0) cabinetDoor(this.door);
-    if (this.drag >= 0) {
-      ctx.strokeStyle = C.gold; ctx.lineWidth = 3; ctx.setLineDash([6, 5]);
-      ctx.strokeRect(CAB.x + 4, CAB.y + 4, CAB.w - 8, CAB.h - 8); ctx.setLineDash([]);
-    }
     const danger = this.dead || this.items.some(it => !it.stored && dist(it.x, it.y, this.bx, this.by) < 90);
     // Sort people and objects on their floor contact point so nearer things occlude farther ones.
     const actors: Array<[number, () => void]> = [];
@@ -165,7 +163,7 @@ function item(kind: Kind, x: number, y: number, s: number, rot = 0): void {
       ctx.strokeStyle = '#e8cfa0'; ctx.lineWidth = 2; seg(-10 + i * 4, -9, -10 + i * 4 - 1, -15);
       ctx.fillStyle = C.red; circ(-11 + i * 4, -16, 1.8);
     }
-    ctx.fillStyle = lin(-14, 0, 14, 0, [[0, '#2856c9'], [1, '#1a3f99']]); rr(-14, -2, 28, 10, 2);
+    ctx.fillStyle = lin(-14, 0, 14, 0, [[0, '#5379ab'], [1, '#1a3f99']]); rr(-14, -2, 28, 10, 2);
     ctx.fillStyle = '#7a3b2a'; ctx.fillRect(-14, 6, 28, 2);
     ctx.fillStyle = '#fff'; ctx.font = '700 6px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('ШҮДЭНЗ', 0, 3);
@@ -237,7 +235,7 @@ function paintRoom(): void {
   ctx.fillStyle = 'rgba(40,25,10,.25)'; rr(34, 124, 64, 50, 3);
   ctx.fillStyle = lin(30, 0, 94, 0, [[0, '#8a5a2e'], [1, '#55331a']]); rr(30, 120, 64, 50, 3);
   ctx.fillStyle = lin(0, 126, 0, 164, [[0, '#9fd2f2'], [1, '#86b84a']]); ctx.fillRect(36, 126, 52, 38);
-  ctx.fillStyle = '#2856c9'; rr(48, 140, 10, 20, 3); ctx.fillStyle = '#e5332a'; rr(64, 144, 10, 16, 3);
+  ctx.fillStyle = '#5379ab'; rr(48, 140, 10, 20, 3); ctx.fillStyle = '#e5332a'; rr(64, 144, 10, 16, 3);
   ctx.fillStyle = '#f0c39a'; circ(53, 137, 4); circ(69, 141, 4);
   ctx.fillStyle = 'rgba(40,25,10,.25)'; circ(152, 234, 24);
   ctx.fillStyle = rad(150, 230, 24, [[0, '#ffffff'], [1, '#d8dce4']]); circ(150, 230, 22);

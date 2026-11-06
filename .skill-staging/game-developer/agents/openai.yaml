@@ -1,0 +1,4 @@
+interface:
+  display_name: "Game Developer"
+  short_description: "Build playable levels, mechanics, and controls"
+  default_prompt: "Use $game-developer to improve this game's mechanics and deliver a tested, playable change."
