@@ -1,5 +1,7 @@
-import {ctx, W, H, reduce, clock} from '../core/canvas';
+import {ctx, W, H, reduce, clock, layer} from '../core/canvas';
 import {rr, circ, ell, seg, lin} from '../core/draw';
+import {planks, skirting, mottle} from './scenery';
+import {perspectiveFloor} from './depth';
 import {bayraa} from './bayraa';
 import {caregiver} from './safety';
 import type {ExtraKind} from '../meta/extra';
@@ -61,14 +63,74 @@ export function extraDanger(kind:ExtraKind):void {
   ctx.restore();
 }
 
+const KITCHEN:readonly ExtraKind[]=['knife','kettle','oven'];
+
+/** Window with sky and a soft city silhouette; curtains in the living room. */
+function roomWindow(x:number,y:number,w:number,h:number,curtains:boolean):void {
+  ctx.fillStyle='rgba(60,40,20,.18)';rr(x-4,y-2,w+12,h+12,4);
+  ctx.fillStyle='#f4efe4';rr(x-6,y-6,w+12,h+12,4);
+  ctx.fillStyle=lin(0,y,0,y+h,[[0,'#8fc6ea'],[1,'#d8eef8']]);ctx.fillRect(x,y,w,h);
+  ctx.fillStyle='rgba(120,150,175,.45)';
+  for(let i=0;i<5;i++){const bw=w/5,bh=h*(.25+((i*7)%3)*.12);ctx.fillRect(x+i*bw+1,y+h-bh,bw-3,bh);}
+  ctx.fillStyle='rgba(255,255,255,.35)';ctx.beginPath();ctx.moveTo(x+8,y);ctx.lineTo(x+26,y);ctx.lineTo(x+8,y+h*.45);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#f4efe4';ctx.lineWidth=5;seg(x+w/2,y,x+w/2,y+h);seg(x,y+h*.42,x+w,y+h*.42);
+  ctx.fillStyle='#e8e0cf';rr(x-10,y+h+4,w+20,7,2);
+  if(curtains){
+    ctx.fillStyle='#8a5a8c';ctx.fillRect(x-14,y-14,w+28,6);
+    for(const side of [0,1]){
+      const cx=side?x+w-6:x-12;
+      ctx.fillStyle=lin(cx,0,cx+20,0,[[0,'#b4657a'],[.5,'#cf8597'],[1,'#a65a6e']]);
+      ctx.beginPath();ctx.moveTo(cx,y-10);ctx.lineTo(cx+18,y-10);ctx.quadraticCurveTo(cx+(side?2:22),y+h*.6,cx+18,y+h+14);ctx.lineTo(cx,y+h+14);ctx.closePath();ctx.fill();
+    }
+  }
+}
+
+/** Baked indoor backdrops: wall detail stays above the play line (y 520), the floor stays quiet. */
+function paintRoom(kitchen:boolean):void {
+  ctx.fillStyle=lin(0,0,0,520,[[0,kitchen?'#e7dcc6':'#e6cfa8'],[1,kitchen?'#f6eedd':'#f3e4c8']]);ctx.fillRect(0,0,W,520);
+  if(kitchen){
+    // tiled backsplash behind the counter
+    ctx.fillStyle='#eef0ea';ctx.fillRect(0,396,W,112);
+    ctx.strokeStyle='rgba(110,130,130,.22)';ctx.lineWidth=1;
+    for(let y=396,row=0;y<508;y+=22,row++){seg(0,y,W,y);for(let x=row%2?14:0;x<W;x+=28)seg(x,y,x,y+22);}
+    // wall cupboards
+    ctx.fillStyle='rgba(60,40,20,.2)';rr(200,272,154,96,5);
+    ctx.fillStyle=lin(0,262,0,360,[[0,'#d3a676'],[1,'#b9895a']]);rr(196,262,154,96,5);
+    ctx.strokeStyle='rgba(80,50,25,.45)';ctx.lineWidth=2;seg(273,266,273,354);
+    ctx.strokeRect(204,270,62,80);ctx.strokeRect(280,270,62,80);
+    ctx.fillStyle='#6b4a2c';rr(258,330,4,14,2);rr(284,330,4,14,2);
+    roomWindow(20,286,92,96,false);
+    // a small shelf with jars
+    ctx.fillStyle='#a77d52';rr(130,350,52,6,2);
+    for(const [jx,c] of [[138,'#e1a95f'],[152,'#c95f4a'],[166,'#7aa36a']] as const){ctx.fillStyle=c;rr(jx,330,11,20,3);ctx.fillStyle='#f4efe4';rr(jx-1,327,13,5,2);}
+  } else {
+    ctx.fillStyle='rgba(190,140,80,.16)';
+    for(let yy=30;yy<510;yy+=40)for(let xx=(yy/40)%2?20:0;xx<W;xx+=40){ctx.beginPath();ctx.moveTo(xx,yy-6);ctx.lineTo(xx+5,yy);ctx.lineTo(xx,yy+6);ctx.lineTo(xx-5,yy);ctx.closePath();ctx.fill();}
+    mottle(0,0,W,520,73,'130,90,40',40,.05);
+    roomWindow(238,296,84,104,true);
+    // framed photo of the steppe
+    ctx.fillStyle='rgba(40,25,10,.22)';rr(152,298,60,46,3);
+    ctx.fillStyle=lin(150,0,210,0,[[0,'#8a5a2e'],[1,'#55331a']]);rr(148,294,60,46,3);
+    ctx.fillStyle=lin(0,300,0,334,[[0,'#9fd2f2'],[1,'#86b84a']]);ctx.fillRect(154,300,48,34);
+    ctx.fillStyle='#f4efe4';ell(170,326,9,5);ctx.fillStyle='#e5332a';rr(166,318,8,4,1);
+  }
+  skirting(520);
+  if(kitchen)perspectiveFloor(520,'#d9c9ad','rgba(120,95,70,.25)');
+  else planks(520,H,180,31,'#c89562','#8a5c32');
+}
+
 /** Full-size scene used by gameplay, menu snapshots and the safe-action animation. */
 export function extraScene(kind:ExtraKind,p=0,failed=false,hx=280,hy=470,helmetOn=false,sidewalkX=130):void {
   const outdoor=kind==='helmet'||kind==='sidewalk';
-  ctx.fillStyle=lin(0,0,0,H,[[0,outdoor?'#a8d5e9':'#e5d7be'],[1,'#f8eddb']]);ctx.fillRect(0,0,W,H);
-  if(outdoor){ctx.save();ctx.globalAlpha=.48;outdoorBackdrop(kind==='helmet'?'park':'city',W,H,kind==='helmet'?520:320);ctx.restore();}
-  // Quiet floor: the actor and hazardous object supply the important detail.
-  ctx.fillStyle=outdoor?'#c6cbbb':'#d7c7b0';ctx.fillRect(0,520,W,H-520);
-  ctx.strokeStyle=outdoor?'#abb69d':'#bcaa90';ctx.lineWidth=2;seg(0,520,W,520);
+  if(outdoor){
+    ctx.fillStyle=lin(0,0,0,H,[[0,'#a8d5e9'],[1,'#f8eddb']]);ctx.fillRect(0,0,W,H);
+    ctx.save();ctx.globalAlpha=.85;outdoorBackdrop(kind==='helmet'?'park':'city',W,H,kind==='helmet'?520:320);ctx.restore();
+    ctx.fillStyle='#c6cbbb';ctx.fillRect(0,520,W,H-520);
+    ctx.strokeStyle='#abb69d';ctx.lineWidth=2;seg(0,520,W,520);
+  } else {
+    const kitchen=KITCHEN.includes(kind);
+    layer(kitchen?'extra-room-kitchen':'extra-room-living',()=>paintRoom(kitchen));
+  }
   if(kind==='sidewalk'){
     ctx.fillStyle='#d5cbb4';ctx.fillRect(0,320,190,320);
     ctx.fillStyle='#667382';ctx.fillRect(205,320,155,320);ctx.fillStyle='#ede4c9';rr(190,320,15,320,0);

@@ -11,7 +11,7 @@ const {DragKeys}=load('core/dragKeys.ts',['DragKeys']);
 let depth=0,draws=0,warnings=0;
 const finite=(...a)=>{draws++;for(const n of a)if(typeof n==='number')assert.ok(Number.isFinite(n));};
 const ctx=new Proxy({save(){depth++;},restore(){depth--;assert.ok(depth>=0);}},{get:(o,k)=>k in o?o[k]:finite,set:(o,k,v)=>{o[k]=v;return true;}});
-const artBindings={stopHint:(...a)=>{warnings++;finite(...a);},outdoorBackdrop:finite,ctx,W:360,H:640,reduce:false,clock:{t:0},rr:finite,circ:finite,ell:finite,seg:finite,lin:()=> '#abc',bayraa:finite,caregiver:finite,car:finite};
+const artBindings={stopHint:(...a)=>{warnings++;finite(...a);},outdoorBackdrop:finite,ctx,W:360,H:640,reduce:false,clock:{t:0},rr:finite,circ:finite,ell:finite,seg:finite,lin:()=> '#abc',bayraa:finite,caregiver:finite,car:finite,layer:(_key,paint)=>paint(),planks:finite,skirting:finite,mottle:finite,perspectiveFloor:finite};
 const art=load('art/extra.ts',['extraScene','extraDanger','extraLesson','extraConsequence','hazardPoint','HELMET_HEAD'],artBindings);
 const ctl={stage:1,variation:0,wins:0,losses:0,win(){this.wins++;},lose(){this.losses++;}};
 const classes=load('games/extra.ts',['Helmet','Stairs','Sidewalk','extraGames'],{ctl,DragKeys,EXTRA_LEVELS,...art,sfx(){},dangerZone:finite,dist:(a,b,c,d)=>Math.hypot(a-c,b-d)});
