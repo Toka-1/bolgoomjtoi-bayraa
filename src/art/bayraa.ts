@@ -3,11 +3,13 @@ import { C, lin, rad, circ, ell, seg, rr, shadow } from '../core/draw';
 import { rng } from '../core/rng';
 import { look } from './look';
 
-export type Mood = 'ok' | 'dead' | 'scared' | 'happy';
+export type Mood = 'ok' | 'dead' | 'scared' | 'happy' | 'hurt' | 'dizzy' | 'breathless';
 export interface BayraaOpts {
   rot?: number; shiver?: boolean; frozen?: boolean; green?: boolean;
   mood?: Mood; arms?: number; wave?: boolean; /** true = festive hat, 'winter' = fox-fur лоовууз with ear flaps */
   hat?: boolean | 'winter'; noShadow?: boolean; seated?: boolean;
+  injury?: 'hand' | 'foot' | 'head' | 'stomach' | 'throat';
+  cough?: boolean; wet?: boolean; pale?: boolean;
 }
 
 type Skin = readonly [string, string, string];
@@ -21,13 +23,20 @@ export function bayraa(x: number, y: number, s = 1, o: BayraaOpts = {}): void {
   if (!o.noShadow) shadow(x, y + 1, 34 * s, 7 * s, 0.32);
   ctx.save();
   ctx.translate(x, y); ctx.scale(s, s);
+  // Expression stays cosmetic: feet and interaction anchors never move during play.
+  const joyful = o.mood === 'happy' && !o.seated;
+  if (joyful && !reduce && o.hat !== false) {
+    const dance = look.outfit.celebration ?? 0;
+    ctx.rotate(Math.sin(t * (dance === 2 ? 12 : 7)) * (dance === 1 ? .065 : .035));
+    ctx.scale(1 + Math.sin(t * 8) * .015, 1 - Math.sin(t * 8) * .015);
+  }
   if (o.rot) ctx.rotate(o.rot);
   if (o.shiver && !reduce) ctx.translate(Math.sin(t * 70) * 1.6, 0);
 
   const pal = o.frozen
     ? { lt: '#cdeafc', md: '#8fc7ef', dk: '#5b98c6', trim: '#f2fbff', cuff: '#b8dcf3' }
     : look.outfit;
-  const skin = o.frozen ? SKIN_FROZEN : o.green ? SKIN_SICK : SKIN;
+  const skin = o.frozen ? SKIN_FROZEN : o.green ? SKIN_SICK : o.pale ? ['#ede8da','#d8d6cb','#b3b4ad'] as const : SKIN;
 
   if (o.seated) {
     // Foreshortened thighs rest on the cushion; shins hang over its front edge.
@@ -78,9 +87,14 @@ export function bayraa(x: number, y: number, s = 1, o: BayraaOpts = {}): void {
   ctx.quadraticCurveTo(-12, -27, -9, -36); ctx.closePath(); ctx.fill();
 
   // arms
-  const up = o.arms ?? 0, wave = o.wave && !reduce ? Math.sin(t * 8) * 10 : 0;
-  const lx = -31, ly = -32 - up * 34;
-  const rx = 31 + (o.wave ? 6 : 0), ry = -32 - up * 34 - (o.wave ? 22 : 0) + wave;
+  const up = o.arms ?? (joyful ? .55 : 0), wave = o.wave && !reduce ? Math.sin(t * 8) * 10 : 0;
+  let lx = -31, ly = -32 - up * 34;
+  let rx = 31 + (o.wave ? 6 : 0), ry = -32 - up * 34 - (o.wave ? 22 : 0) + wave;
+  if(o.injury==='hand'){lx=-5;ly=-39;rx=-12;ry=-38;}
+  if(o.injury==='head'){lx=-23;ly=-88;rx=23;ry=-88;}
+  if(o.injury==='stomach'){lx=-5;ly=-37;rx=5;ry=-32;}
+  if(o.injury==='throat'){lx=-5;ly=-65;rx=8;ry=-64;}
+  if(o.cough){lx=-5;ly=-77;}
   arm(-17, -58, lx, ly, pal, skin);
   arm(17, -58, rx, ry, pal, skin);
 
@@ -108,17 +122,24 @@ export function bayraa(x: number, y: number, s = 1, o: BayraaOpts = {}): void {
   ctx.beginPath(); ctx.arc(0, -82, 2.6, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke();
 
   face(o.mood ?? 'ok');
+  if(o.cough){ctx.fillStyle=skin[1];circ(-4,-77,5);}
+  if(o.wet){
+    ctx.strokeStyle='#69b6d6';ctx.lineWidth=2;
+    for(const [dx,dy] of [[-21,-74],[19,-64],[-23,-38],[24,-26]])seg(dx,dy,dx-1,dy+7);
+  }
   if (o.frozen) {
     ctx.fillStyle = 'rgba(255,255,255,.55)';
     const r = rng(3);
     for (let i = 0; i < 9; i++) circ(r(-20, 20), r(-108, -66), r(0.8, 1.8));
   }
-  if (o.hat === 'winter') winterHat(0, -101, 1);
-  else if (o.hat) mongolHat(0, -101, 1);
+  const hat = o.hat ?? look.outfit.hat;
+  if (hat === 'winter') winterHat(0, -101, 1);
+  else if (hat) mongolHat(0, -101, 1);
   ctx.restore();
 
   function boot(d: number): void {
     ctx.save(); ctx.scale(d, 1);
+    if(o.injury==='foot'&&d===1)ctx.translate(0,-7);
     ctx.beginPath();
     ctx.moveTo(4, -17); ctx.lineTo(18, -17); ctx.lineTo(20, -6);
     ctx.quadraticCurveTo(27, -6, 30, -12); ctx.quadraticCurveTo(30, -1, 20, 0);
@@ -156,14 +177,26 @@ function eye(x: number, y: number, r = 4.4, iris = 3.1): void {
 
 function face(m: Mood): void {
   ctx.strokeStyle = '#22150c'; ctx.lineCap = 'round';
-  if (m === 'dead') {
+  if(m==='hurt'){
+    ctx.lineWidth=2.3;
+    for(const x of [-9,9]){seg(x-4,-91,x+3,-88);seg(x+3,-88,x-4,-85);}
+    ctx.beginPath();ctx.moveTo(-6,-73);ctx.quadraticCurveTo(0,-79,6,-73);ctx.stroke();
+    ctx.fillStyle='#8abed5';ell(-18,-82,2,4);
+  } else if(m==='dizzy'){
+    ctx.lineWidth=2;seg(-14,-89,-5,-89);seg(5,-89,14,-89);
+    ctx.beginPath();ctx.moveTo(-5,-73);ctx.quadraticCurveTo(0,-78,6,-73);ctx.stroke();
+  } else if(m==='breathless'){
+    ctx.lineWidth=2;seg(-13,-90,-5,-88);seg(5,-88,13,-90);
+    ctx.fillStyle='#63433b';ell(0,-74,4,6);
+  } else if (m === 'dead') {
     ctx.lineWidth = 2.6;
     seg(-12, -92, -6, -86); seg(-6, -92, -12, -86); seg(6, -92, 12, -86); seg(12, -92, 6, -86);
     ctx.beginPath(); ctx.moveTo(-6, -73); ctx.quadraticCurveTo(0, -77, 6, -73); ctx.stroke();
   } else if (m === 'scared') {
     ctx.lineWidth = 2; seg(-14, -99, -5, -101); seg(14, -99, 5, -101);
     eye(-9, -89, 5.6, 2.4); eye(9, -89, 5.6, 2.4);
-    ctx.fillStyle = '#5a1e1a'; ell(0, -73, 4.2, 5.4);
+    const breath = reduce ? 0 : Math.sin(clock.t * 5) * .5;
+    ctx.fillStyle = '#5a1e1a'; ell(0, -73, 4.2, 5.4 + breath);
     ctx.fillStyle = '#e07a74'; ell(0, -70.5, 2.6, 1.8);
   } else if (m === 'happy') {
     ctx.lineWidth = 2.6;
@@ -176,7 +209,9 @@ function face(m: Mood): void {
     ctx.fillStyle = '#fff'; ctx.fillRect(-5, -78, 10, 2);
   } else {
     ctx.lineWidth = 2; seg(-13, -96, -5, -97); seg(13, -96, 5, -97);
-    eye(-9, -88); eye(9, -88);
+    const blink = !reduce && clock.t % 4.7 > 4.55;
+    if (blink) { seg(-13, -88, -5, -88); seg(5, -88, 13, -88); }
+    else { eye(-9, -88); eye(9, -88); }
     ctx.lineWidth = 2.2;
     ctx.beginPath(); ctx.arc(0, -79, 5, 0.2 * Math.PI, 0.8 * Math.PI); ctx.stroke();
   }

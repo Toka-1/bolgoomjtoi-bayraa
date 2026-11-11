@@ -32,8 +32,8 @@ export function icicle(x: number, y: number, length: number): void {
   ctx.restore();
 }
 
-export function snowRoof(x: number, y: number, w: number, looseIndex = -1): void {
-  ctx.fillStyle = '#b79a86'; rr(x, y, w, 230, 3);
+export function snowRoof(x: number, y: number, w: number, looseIndex = -1, wallHeight = 230): void {
+  ctx.fillStyle = '#b79a86'; rr(x, y, w, wallHeight, 3);
   ctx.fillStyle = '#7e929c'; rr(x - 7, y - 9, w + 14, 18, 4);
   ctx.fillStyle = '#eef1e9'; rr(x - 10, y - 15, w + 20, 13, 5);
   for (let i = 0; i < 4; i++) if (i !== looseIndex) icicle(x + 18 + i * 31, y + 7, 35 + i % 2 * 24);

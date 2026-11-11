@@ -7,6 +7,7 @@ import { dangerZone } from '../art/danger';
 import { perspectiveFloor } from '../art/depth';
 import { reversingCar, damagedCord, snowRoof, icicle } from '../art/prevention';
 import type { Micro } from './types';
+import {outdoorBackdrop} from '../art/outdoors';
 
 const CHILD = { x: 182, y: 591, scale: 1.1, safeX: 146 };
 const CORD = { x: 270, y: 578, scale: .7 };
@@ -14,6 +15,7 @@ const FALLING = { x: 201, startY: 325, length: 46, groundY: 590 };
 
 /** All outcomes latch once; the result animation cannot alter gameplay. */
 abstract class Retreat implements Micro {
+  readonly focus = {zoom:1.05,y:460,height:420};
   abstract readonly cmd: string;
   abstract readonly sub: string;
   abstract readonly lose: string;
@@ -45,13 +47,13 @@ export class Reversing extends Retreat {
   readonly tip = 'Ухарч буй машины араар бүү яв. Машинаас хол байж, том хүнтэй хамт яв.';
   update(dt: number): void {
     if (this.safe || this.dead) return;
-    this.approach = Math.min(1, this.approach + dt / 4.2);
+    this.approach = Math.min(1, this.approach + dt / (4.2 - (ctl.stage ?? 0) * .35));
     if (this.approach >= 1) this.fail();
   }
   down(x: number, y: number): void {
     const v = this.vehicle();
     if (this.adultHit(x, y)) this.leave();
-    else if (x >= v.x - 9 && x <= v.x + 79 * v.scale && y >= v.y - 54 * v.scale && y <= v.y + 10) this.fail();
+    else if (x >= v.x - 9 && x <= v.x + 127 * v.scale && y >= v.y - 54 * v.scale && y <= v.y + 10) this.fail();
   }
   danger(): void {
     const v = this.vehicle();
@@ -60,8 +62,12 @@ export class Reversing extends Retreat {
   draw(): void {
     layer('reversing-yard', () => {
       ctx.fillStyle = '#bed4dc'; ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = '#cab6a0'; rr(190, 183, 170, 242, 4);
-      ctx.fillStyle = '#7e939d'; rr(215, 239, 120, 186, 4);
+      outdoorBackdrop('city',W,H,456);
+      ctx.fillStyle = '#cab6a0'; rr(180, 125, 180, 331, 4);
+      ctx.fillStyle = '#6b7d83'; rr(207, 198, 142, 258, 4);
+      ctx.strokeStyle = 'rgba(214,224,222,.4)'; ctx.lineWidth = 2;
+      for (let y = 212; y < 453; y += 18) { ctx.beginPath(); ctx.moveTo(210, y); ctx.lineTo(346, y); ctx.stroke(); }
+      ctx.fillStyle = '#e0d4bc'; rr(198, 188, 158, 12, 2);
       ctx.fillStyle = '#b4c49a'; ctx.fillRect(0, 411, W, 45);
       perspectiveFloor(456, '#b8b7b0');
       ctx.fillStyle = '#e9e3d4'; rr(0, 456, 197, 150, 3);
@@ -88,8 +94,9 @@ export class Cord extends Retreat {
   draw(): void {
     layer('cord-room', () => {
       ctx.fillStyle = '#e9ddc7'; ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = '#aa8d72'; rr(191, 149, 132, 131, 5);
-      ctx.fillStyle = '#b5d0d6'; rr(200, 158, 114, 113, 3);
+      ctx.fillStyle = '#aa8d72'; rr(191, 260, 132, 131, 5);
+      ctx.fillStyle = '#b5d0d6'; rr(200, 269, 114, 113, 3);
+      ctx.fillStyle = '#e9e1cd'; rr(184, 391, 146, 9, 3);
       perspectiveFloor(466, '#c1a17d');
       ctx.fillStyle = '#e8e4d8'; rr(266, 400, 40, 39, 5);
       ctx.fillStyle = '#69777c'; rr(279, 412, 4, 9, 1); rr(291, 412, 4, 9, 1);
@@ -114,7 +121,7 @@ export class Icicles extends Retreat {
   readonly tip = 'Дээврээс мөс, цас унаж болно. Байшингийн ирмэгээс хол явж, том хүнд хэл.';
   update(dt: number): void {
     if (this.safe || this.dead) return;
-    this.approach = Math.min(1, this.approach + dt / 4.3);
+    this.approach = Math.min(1, this.approach + dt / (4.3 - (ctl.stage ?? 0) * .3));
     // The consequence starts when the ice reaches the child's head, not after
     // it has already passed through the character and hit the pavement.
     if (this.fallingTip().y >= CHILD.y - 109 * CHILD.scale) this.fail();
@@ -130,8 +137,9 @@ export class Icicles extends Retreat {
   draw(): void {
     layer('icicle-street', () => {
       ctx.fillStyle = '#c6d9e0'; ctx.fillRect(0, 0, W, H);
+      outdoorBackdrop('winter-city',W,H,478);
       perspectiveFloor(478, '#ecece2', 'rgba(95,124,140,.15)');
-      snowRoof(183, 318, 151, 0);
+      snowRoof(183, 318, 151, 0, 272);
     });
     ctx.fillStyle = 'rgba(95,124,140,.15)'; ell(FALLING.x, FALLING.groundY, 21, 6);
     const tip = this.fallingTip();

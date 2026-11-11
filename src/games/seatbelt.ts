@@ -2,6 +2,7 @@ import { dangerZone } from '../art/danger';
 import { ctx, W, H, layer } from '../core/canvas';
 import { lin, rr, seg, circ, dist } from '../core/draw';
 import { ctl } from '../core/ctl';
+import { sfx } from '../core/audio';
 import { DragKeys } from '../core/dragKeys';
 import { bayraa } from '../art/bayraa';
 import { boosterSeat } from '../art/hazards';
@@ -11,6 +12,7 @@ import type { Micro } from './types';
 const TONGUE = { x: 123, y: 398 }, BUCKLE = { x: 218, y: 451 };
 
 export class Seatbelt implements Micro {
+  readonly focus = {zoom:1.35,y:390,height:430};
   readonly cmd = 'БҮСЭЭ ЗҮҮ!';
   readonly sub = 'Бүсний үзүүрийг түгжээнд нь хий';
   readonly lose = 'Бүсээ зүүж амжсангүй!';
@@ -18,9 +20,15 @@ export class Seatbelt implements Micro {
   readonly winText = 'БҮСЭЭ ЗҮҮЛЭЭ!';
   dead = false;
   private x = TONGUE.x; private y = TONGUE.y;
+  private homeX = TONGUE.x; private homeY = TONGUE.y;
   private drag = false; private fastened = false;
   private arrows = new DragKeys();
-  init(): void { this.dead = false; this.fastened = false; this.cancelInput(); }
+  init(): void {
+    this.dead = false; this.fastened = false;
+    this.homeX = TONGUE.x + (ctl.variation ?? 0) * 14;
+    this.homeY = TONGUE.y + (ctl.variation ?? 0) * 10;
+    this.cancelInput();
+  }
   update(dt: number): void {
     if (!this.drag || this.dead || this.fastened) return;
     const [dx, dy] = this.arrows.delta(dt); this.move(this.x + dx, this.y + dy);
@@ -34,12 +42,12 @@ export class Seatbelt implements Micro {
     if (!this.drag || this.dead || this.fastened) return;
     this.drag = false; this.arrows.clear();
     if (dist(this.x, this.y, BUCKLE.x, BUCKLE.y) < 25) {
-      this.fastened = true; this.x = BUCKLE.x; this.y = BUCKLE.y; ctl.win();
+      this.fastened = true; this.x = BUCKLE.x; this.y = BUCKLE.y; sfx('buckle'); ctl.win();
     } else this.cancelInput();
   }
   cancelInput(): void {
     this.drag = false; this.arrows.clear();
-    if (!this.fastened) { this.x = TONGUE.x; this.y = TONGUE.y; }
+    if (!this.fastened) { this.x = this.homeX; this.y = this.homeY; }
   }
   select(x: number, y: number): boolean {
     if (this.drag) { this.move(x, y); this.up(); } else this.down(x, y);

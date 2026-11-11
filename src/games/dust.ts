@@ -22,6 +22,7 @@ const LOSE: Record<Exclude<Kind, 'ger'>, string> = {
 };
 
 export class Dust implements Micro {
+  readonly focus = {zoom:1,y:428,height:420};
   readonly cmd = 'ГЭРТЭЭ ОР!';
   readonly sub = 'Шуурга ирж байна, гэр рүү дар';
   readonly lose = 'Шуурганд хоцорлоо!';
@@ -41,7 +42,7 @@ export class Dust implements Micro {
     this.t = 0; this.choice = -1; this.run = 0; this.dead = false;
   }
 
-  private get front(): number { return FRONT0 + this.t * FRONT_V; }
+  private get front(): number { return FRONT0 + this.t * FRONT_V * (1 + (ctl.stage ?? 0) * .08); }
   /** 1 = clear, 0 = swallowed by the storm. */
   visibility(i: number): number { return Math.max(0, Math.min(1, (SLOTS[i] + 30 - this.front) / 60)); }
 

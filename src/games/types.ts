@@ -1,5 +1,7 @@
 /** One microgame. Coordinates are in the 360×640 game frame. */
 export interface Micro {
+  /** Stable framing shared by play, practice previews and pointer conversion. */
+  readonly focus?: { zoom: number; y: number; height?: number };
   readonly cmd: string;
   readonly sub: string;
   /** Message shown when the timer runs out (unless timeoutWin). */

@@ -12,6 +12,7 @@ const CAR_Y = 466;
 const COW_X = 210, COW_SCALE = 0.62;
 
 export class Cow implements Micro {
+  readonly focus = {zoom:1,y:450,height:320};
   readonly cmd = 'МАЛЫГ ХҮЛЭЭ!';
   readonly sub = 'Дарж байхад машин зогсоно';
   readonly lose = 'Хоцорлоо!';
@@ -22,7 +23,7 @@ export class Cow implements Micro {
   private pointerHold = false;
   private cx = 20; private v = 100; private hold = false; private cowY = 360; private t = 0; private t0 = 0;
 
-  init(): void { this.cx = 20; this.v = 100; this.cancelInput(); this.cowY = 360; this.t = 0; this.t0 = 0.1 + Math.random() * 0.4; }
+  init(): void { this.dead = false; this.cx = 20; this.v = 100; this.cancelInput(); this.cowY = 360; this.t = 0; this.t0 = 0.1 + Math.random() * (0.4 + (ctl.stage ?? 0) * .15); }
   update(dt: number): void {
     if (this.dead) return;
     this.t += dt;
@@ -30,8 +31,8 @@ export class Cow implements Micro {
     const target = this.hold ? 0 : 100;
     this.v = Math.max(0, Math.min(100, this.v + (target > this.v ? 260 : -600) * dt));
     this.cx += this.v * dt;
-    if (this.cowY > CAR_Y - 35 && this.cowY < CAR_Y + 50 && this.cx + 78 > COW_X - 34 * COW_SCALE && this.cx < COW_X + 65 * COW_SCALE) { this.dead = true; ctl.lose('Үхэр мөргөчихлөө!'); }
-    if (this.cx + 78 >= 335) ctl.win();
+    if (this.cowY > CAR_Y - 35 && this.cowY < CAR_Y + 50 && this.cx + 126 > COW_X - 34 * COW_SCALE && this.cx < COW_X + 65 * COW_SCALE) { this.dead = true; ctl.lose('Үхэр мөргөчихлөө!'); }
+    if (this.cx + 126 >= 335) ctl.win();
   }
   down(): void { this.pointerHold = true; this.syncBrake(); }
   up(): void { this.pointerHold = false; this.syncBrake(); }

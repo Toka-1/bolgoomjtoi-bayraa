@@ -5,7 +5,7 @@ import './style.css';
 import { cv, clock, resize, beginFrame } from './core/canvas';
 import { C } from './core/draw';
 import { installInput } from './core/input';
-import { setAudioEnabled } from './core/audio';
+import { setAudioEnabled, setMusicScene } from './core/audio';
 import { progress } from './meta/progress';
 import { g, step, debugStart, debugScreen } from './flow';
 import { render } from './ui/screens';
@@ -28,6 +28,7 @@ function frame(now: number): void {
   const dt = Math.min(0.05, (now - last) / 1000);
   last = now; clock.t += dt;
   step(dt);
+  setMusicScene(g.state === 'play', g.practice ? 1 : g.speed, g.frac > .7);
   syncInput();
   beginFrame(C.ink);
   render();

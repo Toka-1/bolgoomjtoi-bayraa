@@ -12,7 +12,7 @@ export const g = {
   /** seconds in the current state */
   st: 0,
   dur: 5, resDur: 1.1, frac: 0,
-  effectDur: 2.4, lessonNarrated: false,
+  effectDur: 3.4, lessonNarrated: false,
   bag: [] as number[],
   ok: false, msg: '', faster: false, winText: '',
   best: 0, practice: false,
@@ -22,17 +22,33 @@ export const g = {
   played: [] as string[],
   /** this win earned a new safety card */
   newCard: false,
+  reward: -1,
+  celebration: 0,
   quiz: { list: [] as QuizItem[], i: 0, picked: -1, right: 0 },
   /** quiz points added at the end of the run */
   bonus: 0,
 };
 
 const BEST_KEY = 'bayraa-best';
+const RUN_START_SPEED = 1.35;
+const WINS_PER_SPEEDUP = 3;
+// Match the roster in games/index.ts: tap, balance, drag, hold, or timing.
+const ACTIONS = ['tap','balance','survive','drag','hold','drag','timing','tap','drag','tap','tap','tap','tap','drag','tap','tap','tap','survive','tap','drag','hold','drag','tap','tap','tap','tap','tap','tap','tap','tap'];
+
+/** Prefer a different action, while consuming every eligible game once per bag. */
+function chooseNext(first = false): number {
+  const previous = first ? -1 : games.indexOf(g.game);
+  const candidates = g.bag.filter(i => i !== previous && ACTIONS[i] !== ACTIONS[previous]);
+  const pool = candidates.length ? candidates : g.bag.filter(i => i !== previous);
+  const index = (pool.length ? pool : g.bag)[Math.floor(Math.random() * (pool.length || g.bag.length))];
+  g.bag.splice(g.bag.indexOf(index), 1);
+  return index;
+}
 try { g.best = Number(localStorage.getItem(BEST_KEY)) || 0; } catch { /* storage blocked */ }
 
 export function startRun(): void {
   g.practice = false;
-  g.score = 0; g.lives = 3; g.speed = 1; g.bag = []; g.faster = false; g.played = []; g.bonus = 0;
+  g.score = 0; g.lives = 3; g.speed = RUN_START_SPEED; g.bag = []; g.faster = false; g.played = []; g.bonus = 0;
   next(true);
 }
 
@@ -41,10 +57,9 @@ function next(first = false): void {
     // teacher mode: only the chosen topics (all of them if the filter would leave nothing)
     let pool = games.map((_, i) => i).filter(i => meta.allowed(games[i]));
     if (!pool.length) pool = games.map((_, i) => i);
-    g.bag = pool.sort(() => Math.random() - 0.5);
-    if (!first && g.bag.length > 1 && games[g.bag[0]] === g.game) g.bag.push(g.bag.shift()!);
+    g.bag = pool;
   }
-  g.game = games[g.bag.shift()!];
+  g.game = games[chooseNext(first)];
   prepareRound();
 }
 
@@ -52,6 +67,9 @@ function prepareRound(): void {
   g.round++;
   g.played.push(g.game.cmd);
   g.newCard = false;
+  g.reward = -1;
+  ctl.stage = g.practice ? 1 : Math.min(2, 1 + Math.floor(g.score / 6));
+  ctl.variation = g.practice ? 0 : Math.floor(Math.random() * 3) - 1;
   g.game.dead = false;
   g.game.init();
   ctl.playing = true; ctl.frac = 0;
@@ -69,7 +87,13 @@ function win(): void {
   g.winText = g.game.winText ?? ['ЗӨВ!', 'ГОЁ!', 'САЙН БАЙНА!'][Math.floor(Math.random() * 3)];
   g.faster = false;
   g.newCard = !g.practice && meta.unlock(g.game.cmd);
-  if (!g.practice && g.score % 4 === 0) { g.speed = Math.min(2.3, g.speed * 1.15); g.faster = true; }
+  if (g.newCard) g.reward = meta.reward?.() ?? -1;
+  if (g.reward >= 0) g.resDur = 2.8;
+  g.celebration = Math.floor(Math.random() * 3);
+  if (!g.practice && g.score % WINS_PER_SPEEDUP === 0) {
+    const speed = Math.min(2.3, g.speed * 1.15);
+    g.faster = speed > g.speed; g.speed = speed;
+  }
   sfx(g.newCard ? 'card' : 'win');
 }
 

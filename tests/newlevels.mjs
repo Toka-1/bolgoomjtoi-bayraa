@@ -12,7 +12,7 @@ function setup(file,name) {
  const people=[];
  const noop=()=>{};
  const { [name]: Game }=load('games/'+file+'.ts',[name],{
-   ctl:events,DragKeys,W:360,H:640,dist:(a,b,c,d)=>Math.hypot(a-c,b-d),
+   ctl:events,DragKeys,sfx(){},W:360,H:640,dist:(a,b,c,d)=>Math.hypot(a-c,b-d),
    ctx:{save(){},restore(){},fillRect(){},set globalAlpha(v){}},layer(){},
    bayraa(...args){people.push(args);},caregiver:noop,dog:noop,hotCup:noop,baby:noop,manhole:noop,
    rr:noop,lin:noop,
@@ -62,12 +62,14 @@ for(const side of [65,295]) {
  m.down(65,460);assert.equal(events.wins,1);m.init();m.key('ArrowLeft',true);assert.equal(events.wins,2);
 }
 {
- const {m,events}=setup('cleaner','Cleaner');m.init();m.down(321,443);assert.equal(events.wins,1);
+ const {m,events}=setup('cleaner','Cleaner');const {LOCK}=load('games/cleaner.ts',['LOCK']);
+ m.init();m.down(LOCK.x,LOCK.y);assert.equal(events.wins,1);
  m.update(10);assert.equal(m.approach,0,'closing cabinet stops the approach');
  m.resultUpdate(1);assert.equal(m.door,1,'door fully covers stored bottles');
  m.down(216,490);assert.equal(events.losses,0);
- m.init();m.down(216,490);assert.equal(events.losses,1,'touching the cleaning bottles fails');
- m.down(321,443);assert.equal(events.wins,1);m.init();m.update(4.2);assert.equal(events.losses,2);
+ m.init();m.down(216,490);assert.equal(events.losses,0,'empty space above the resized bottles is safe');
+ m.down(216,540);assert.equal(events.losses,1,'touching the resized cleaning bottles fails');
+ m.down(LOCK.x,LOCK.y);assert.equal(events.wins,1);m.init();m.update(4.2);assert.equal(events.losses,2);
  m.init();m.key('ArrowUp',true);assert.equal(events.wins,2);
 }
 for(const [name,point] of [['Reversing',[300,550]],['Cord',[270,578]],['Icicles',[260,570]]]) {
@@ -113,21 +115,17 @@ for(const [file,name] of [['dog','Dog'],['drink','Drink'],['manhole','Manhole'],
  if(name==='Cord')continue;
  f.step(60);assert.equal(f.g.state,'result','timeout lesson waits for the child');
 }
-// Every new game remains reachable on the second practice page.
+// All thirty portrait previews remain reachable across ten practice pages.
 const widgets=load('ui/widgets.ts',['PRACTICE_BTN','SOUND_BTN','CARDS_BTN','TEACH_BTN','BACK_BTN','inBtn','inCircle']);
-const g={state:'title'},picked=[],games=Array.from({length:19},(_,i)=>({cmd:String(i)}));
+const g={state:'title'},picked=[],games=Array.from({length:30},(_,i)=>({cmd:String(i)}));
 const menus=load('ui/meta.ts',['uiPress','uiKey','drawPractice'],{
  ...widgets,g,games,W:360,H:640,OUTFITS:[],infoOf:()=>({card:'test'}),
  openScreen(s){g.state=s;},startPractice(i){picked.push(i);},sfx(){},
 });
-menus.uiPress(260,550);menus.uiPress(290,526);menus.uiKey('Enter');assert.equal(picked.at(-1),9);
-menus.uiKey('ArrowRight');menus.uiKey('Enter');assert.equal(picked.at(-1),10);
-menus.uiKey('ArrowRight');menus.uiKey('Enter');assert.equal(picked.at(-1),11);
-menus.uiKey('ArrowRight');menus.uiKey('Enter');assert.equal(picked.at(-1),12);
-for(let i=13;i<=15;i++){menus.uiKey('ArrowRight');menus.uiKey('Enter');assert.equal(picked.at(-1),i);}
-menus.uiPress(64,380);assert.equal(picked.at(-1),15,'third-row practice tile is visible and clickable');
-for(let i=16;i<=18;i++){menus.uiKey('ArrowRight');menus.uiKey('Enter');assert.equal(picked.at(-1),i);}
-menus.uiPress(180,140);assert.equal(picked.at(-1),18,'third page exposes the nineteenth round');
-menus.uiPress(70,526);
-menus.uiPress(70,526);menus.uiKey('Enter');assert.equal(picked.at(-1),0);
-console.log('New levels: win/failure paths, safe routes, timeouts and menu pagination passed.');
+menus.uiPress(260,550);
+for(let page=0;page<10;page++) {
+ for(let row=0;row<3;row++) {menus.uiPress(180,157+row*128);assert.equal(picked.at(-1),page*3+row);}
+ menus.uiPress(290,526);
+}
+menus.uiKey('ArrowRight');menus.uiKey('Enter');assert.equal(picked.at(-1),0,'keyboard selection wraps after level thirty');
+console.log('New levels: win/failure paths, safe routes, timeouts and practice pagination passed.');

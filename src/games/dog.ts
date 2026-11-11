@@ -8,8 +8,10 @@ import { dog } from '../art/hazards';
 import { sun, cloud } from '../art/scenery';
 import { highlight } from '../ui/gesture';
 import type { Micro } from './types';
+import {outdoorBackdrop} from '../art/outdoors';
 
 export class Dog implements Micro {
+  readonly focus = {zoom:1.04,y:460,height:400};
   readonly cmd = 'НОХОЙНООС ХОЛ БАЙ!';
   readonly sub = 'Том хүн дээр дарж хамт холд';
   readonly lose = 'Том хүнээс тусламж авч амжсангүй!';
@@ -18,20 +20,25 @@ export class Dog implements Micro {
   dead = false;
   private safe = false;
   private walk = 0;
-  init(): void { this.dead = false; this.safe = false; this.walk = 0; }
+  private flipped = false;
+  init(): void { this.dead = false; this.safe = false; this.walk = 0; this.flipped = (ctl.variation ?? 0) > 0; }
   update(): void {}
   down(x: number, y: number): void {
     if (this.dead || this.safe) return;
+    if (this.flipped) x = W - x;
     if (x >= 12 && x <= 112 && y >= 300 && y <= 570) { this.safe = true; ctl.win(); }
     else if (dist(x, y, 275, 535) < 68) { this.dead = true; ctl.lose('Нохойд хэт ойртлоо!'); }
   }
-  key(k: string, down: boolean): void { if (down && k === 'ArrowLeft') this.down(62, 470); }
+  key(k: string, down: boolean): void {
+    if (down && k === (this.flipped ? 'ArrowRight' : 'ArrowLeft')) this.down(this.flipped ? W - 62 : 62, 470);
+  }
   resultUpdate(dt: number): void { if (this.safe) this.walk = Math.min(1, this.walk + dt); }
-  hint(): void { if (!this.safe && !this.dead) highlight(62, 452, 47); }
-  danger(): void { if (!this.safe && !this.dead) dangerZone(214, 488, 118, 77); }
+  hint(): void { if (!this.safe && !this.dead) highlight(this.flipped ? W - 62 : 62, 452, 47); }
+  danger(): void { if (!this.safe && !this.dead) dangerZone(this.flipped ? W - 332 : 214, 488, 118, 77); }
   draw(): void {
     layer('dog-courtyard', () => {
       ctx.fillStyle = lin(0, 0, 0, H, [[0, '#8ac9ed'], [1, '#e6f3f9']]); ctx.fillRect(0, 0, W, H);
+      outdoorBackdrop('courtyard',W,H,400);
       sun(285, 135, 23, '#fff2bd', '255,240,180', 0.5);
       cloud(83, 130, 0.75, 0.9, 17); cloud(240, 220, 0.5, 0.8, 19);
       ctx.fillStyle = '#a9b9a0'; rr(0, 240, W, 160, 0);
@@ -42,8 +49,9 @@ export class Dog implements Micro {
       ctx.fillStyle = '#d9cfb7'; ctx.fillRect(0, 400, W, H - 400);
       ctx.fillStyle = '#b78857'; for (let x = 0; x < W; x += 24) rr(x, 310, 15, 112, 4);
     });
-    caregiver(60, 550, 1.35, this.dead);
-    dog(276, 555, 0.9);
-    bayraa(164 - this.walk * 50, 590 - this.walk * 15, 1.3, { mood: this.safe ? 'happy' : this.dead ? 'scared' : 'ok' });
+    caregiver(this.flipped ? W - 60 : 60, 550, 1.35, this.dead);
+    dog(this.flipped ? W - 276 : 276, 555, 0.9);
+    const childX = 164 - this.walk * 50;
+    bayraa(this.flipped ? W - childX : childX, 590 - this.walk * 15, 1.3, { mood: this.safe ? 'happy' : this.dead ? 'scared' : 'ok' });
   }
 }

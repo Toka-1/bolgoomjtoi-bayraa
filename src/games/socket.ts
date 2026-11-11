@@ -11,11 +11,12 @@ import type { Micro } from './types';
 import { DragKeys } from '../core/dragKeys';
 import { stopHint } from '../ui/gesture';
 
-const OUTLET = { x: 225, y: 455, radius: 13 };
+const OUTLET = { x: 225, y: 455, radius: 8 };
 type Metal = { kind: 'fork' | 'key'; x: number; y: number; homeX: number; homeY: number };
-const tipLength = (m: Metal): number => m.kind === 'fork' ? 26 : 21;
+const tipLength = (m: Metal): number => (m.kind === 'fork' ? 26 : 21) * .6;
 
 export class Socket implements Micro {
+  readonly focus = {zoom:1.2,y:520,height:360};
   readonly cmd = 'БИТГИЙ ХҮР!';
   readonly sub = 'Залгуурт юу ч бүү хий';
   readonly lose = 'Цахилгаанд цохиулчихлаа!';
@@ -36,6 +37,7 @@ export class Socket implements Micro {
       { kind: 'fork', x: 108, y: 558, homeX: 108, homeY: 558 },
       { kind: 'key', x: 173, y: 590, homeX: 173, homeY: 590 },
     ];
+    for (const m of this.items) { m.x += (ctl.variation ?? 0) * 14; m.homeX = m.x; }
   }
   update(dt: number): void {
     if (this.drag < 0 || this.dead) return;
@@ -77,11 +79,11 @@ export class Socket implements Micro {
     if (this.drag >= 0) { this.move(x, y); this.up(); } else this.down(x, y);
     return this.drag >= 0;
   }
-  danger(): void { if (!this.dead) dangerZone(196, 427, 58, 57, 'electric'); }
+  danger(): void { if (!this.dead) dangerZone(205, 435, 40, 40, 'electric'); }
   draw(): void {
     layer('socket-insertion-room', paintRoom);
     for (let i = 0; i < this.items.length; i++) if (i !== this.drag && i !== this.inserted) metal(this.items[i], false);
-    bayraa(300, 590, 1.65, { mood: this.dead ? 'scared' : 'ok', arms: this.dead || this.drag >= 0 ? 1 : 0 });
+    bayraa(280, 590, 1.2, { mood: this.dead ? 'scared' : 'ok', arms: this.dead || this.drag >= 0 ? 1 : 0 });
     if (this.drag >= 0) metal(this.items[this.drag], true);
     if (this.inserted >= 0) metal(this.items[this.inserted], true);
     if (this.zap > 0) {
@@ -109,8 +111,9 @@ function bolt(x1: number, y1: number, x2: number, y2: number): void {
 
 /** Drawn tine/key tip is exactly tipLength() from the drag anchor. */
 function metal(m: Metal, raised: boolean): void {
-  if (!raised) shadow(m.x, m.y + 5, 24, 4, 0.22);
+  if (!raised) shadow(m.x, m.y + 5, 15, 3, 0.22);
   ctx.save(); ctx.translate(m.x, m.y); ctx.rotate(raised ? -Math.PI / 2 : m.kind === 'fork' ? -0.3 : 0.25);
+  ctx.scale(.6, .6);
   ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   ctx.strokeStyle = lin(0, -4, 0, 4, [[0, '#edf4fa'], [0.5, '#a0adba'], [1, '#556574']]);
   if (m.kind === 'fork') {
@@ -140,9 +143,9 @@ function paintRoom(): void {
   // A shallow return wall and raised plate establish the wall/floor junction.
   ctx.fillStyle = '#a9c0ad';
   ctx.beginPath(); ctx.moveTo(335, 0); ctx.lineTo(W, 0); ctx.lineTo(W, 524); ctx.lineTo(335, 500); ctx.closePath(); ctx.fill();
-  solidBox(OUTLET.x - 24, OUTLET.y - 24, 48, 48, 5, '#d4d9d9', '#fff9ec', '#8b9996');
+  solidBox(OUTLET.x - 15, OUTLET.y - 15, 30, 30, 4, '#d4d9d9', '#fff9ec', '#8b9996');
   // socket plate
-  ctx.save(); ctx.translate(OUTLET.x, OUTLET.y); ctx.scale(0.6, 0.6); ctx.translate(-250, -300);
+  ctx.save(); ctx.translate(OUTLET.x, OUTLET.y); ctx.scale(0.38, 0.38); ctx.translate(-250, -300);
   shadow(253, 337, 40, 6, 0.25);
   ctx.fillStyle = 'rgba(30,50,40,.25)'; rr(218, 269, 70, 70, 12);
   ctx.fillStyle = lin(215, 265, 285, 335, [[0, '#ffffff'], [1, '#d9dde2']]); rr(215, 265, 70, 70, 12);

@@ -16,6 +16,7 @@ import { Seatbelt } from './seatbelt';
 import { Balcony } from './balcony';
 import { Cleaner } from './cleaner';
 import { Reversing, Cord, Icicles } from './prevention';
+import { extraGames } from './extra';
 
-export const games: Micro[] = [new Smoke(), new Ice(), new Socket(), new Hat(), new Cow(), new Baby(), new Crossing(), new Dust(), new Cabinet(), new River(), new Dog(), new Drink(), new Manhole(), new Seatbelt(), new Balcony(), new Cleaner(), new Reversing(), new Cord(), new Icicles()];
+export const games: Micro[] = [new Smoke(), new Ice(), new Socket(), new Hat(), new Cow(), new Baby(), new Crossing(), new Dust(), new Cabinet(), new River(), new Dog(), new Drink(), new Manhole(), new Seatbelt(), new Balcony(), new Cleaner(), new Reversing(), new Cord(), new Icicles(), ...extraGames];
 export type { Micro };

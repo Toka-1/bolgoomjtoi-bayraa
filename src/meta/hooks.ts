@@ -3,6 +3,7 @@ import { infoOf, type Quiz } from './content';
 import { progress, unlockCard } from './progress';
 import { games } from '../games';
 import { speak, stopSpeaking } from '../core/audio';
+import { OUTFITS } from '../art/look';
 
 export interface QuizItem extends Quiz { cmd: string }
 
@@ -16,6 +17,7 @@ export const meta = {
   /** Reading questions belong to the adult-led mode. */
   readingQuiz: false,
   unlock: (cmd: string): boolean => unlockCard(cmd),
+  reward: (): number => OUTFITS.findIndex(f => f.need > 0 && f.need === progress.cards.size),
   allowed: (m: Micro): boolean => { const i = infoOf(m.cmd); return !i || progress.topics.has(i.topic); },
   /** Three questions, preferring the games played this run. */
   quiz(played: readonly string[]): QuizItem[] {

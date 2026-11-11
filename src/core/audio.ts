@@ -32,7 +32,7 @@ export function setAudioEnabled(on: boolean): void {
 export const audioEnabled = (): boolean => enabled;
 
 /* ---------- effects ---------- */
-export type Sfx = 'win' | 'lose' | 'go' | 'card' | 'tap' | 'horn' | 'zap' | 'splash' | 'door' | 'right' | 'wrong';
+export type Sfx = 'win' | 'lose' | 'go' | 'card' | 'tap' | 'horn' | 'zap' | 'splash' | 'door' | 'right' | 'wrong' | 'buckle' | 'settle';
 
 function tone(f: number, t: number, d: number, type: OscillatorType = 'square', v = 0.05, slide = 0): void {
   if (!ac || !master) return;
@@ -57,6 +57,8 @@ function noise(t: number, d: number, v: number, freq: number, q = 1): void {
 export function sfx(kind: Sfx): void {
   if (!ac) return;
   switch (kind) {
+    case 'buckle': noise(0, .035, .09, 2400, 2); tone(1100, .025, .07, 'triangle', .06); break;
+    case 'settle': noise(0, .09, .045, 600, .8); tone(660, .04, .15, 'sine', .06, 220); break;
     case 'win': tone(660, 0, 0.12); tone(880, 0.1, 0.2); break;
     case 'lose': tone(220, 0, 0.25, 'sawtooth'); tone(150, 0.18, 0.4, 'sawtooth'); break;
     case 'go': tone(520, 0, 0.08, 'triangle', 0.08); break;
@@ -75,6 +77,15 @@ export function sfx(kind: Sfx): void {
 const SCALE = [0, 2, 4, 7, 9];
 let musicTimer: number | null = null;
 let nextNote = 0, step = 0, degree = 2;
+let musicPace = 1, musicActive = false, musicUrgent = false;
+/** Keep menus calm; increase the musical pulse with scored-round speed. */
+export function setMusicScene(active: boolean, speed: number, urgent: boolean): void {
+  musicActive = active;
+  musicPace = active ? Math.max(1, Math.min(1.55, speed)) : 1;
+  musicUrgent = active && urgent;
+}
+// Original repeating pentatonic phrase, answered an octave higher in its second half.
+const MELODY = [2, 4, 5, 4, 2, 1, 0, -1, 2, 4, 6, 5, 4, 2, 1, -1];
 
 function bowed(f: number, t: number, d: number, v: number): void {
   if (!ac || !master) return;
@@ -91,15 +102,15 @@ function bowed(f: number, t: number, d: number, v: number): void {
 
 function schedule(): void {
   if (!ac) return;
-  const beat = 0.42;
+  const beat = 0.42 / (musicPace * (musicUrgent ? 1.1 : 1));
   while (nextNote < ac.currentTime + 0.6) {
     if (step % 8 === 0) bowed(110, nextNote, beat * 8, 0.012);
-    // a gentle random walk on the scale, resting now and then
-    if (step % 4 !== 3 || Math.random() < 0.3) {
-      degree = Math.max(0, Math.min(9, degree + [-1, 0, 1, 1, -1, 2, -2][Math.floor(Math.random() * 7)]));
+    degree = MELODY[step % MELODY.length];
+    if (degree >= 0) {
       const semis = SCALE[degree % 5] + 12 * Math.floor(degree / 5);
       bowed(220 * Math.pow(2, semis / 12), nextNote, beat * (step % 2 ? 1 : 1.8), 0.018);
     }
+    if (musicActive && step % 2 === 0) bowed(step % 4 === 0 ? 110 : 165, nextNote, beat * .55, .012);
     nextNote += beat; step++;
   }
 }

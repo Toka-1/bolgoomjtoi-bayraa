@@ -15,6 +15,7 @@ const SAFE_X = 130, FEET_Y = 590;
 
 /** Prevention: lead the child away from the water. Entering it is always a failure. */
 export class River implements Micro {
+  readonly focus = {zoom:1,y:425,height:420};
   readonly cmd = 'ГОЛ РУУ БҮҮ ОР!';
   readonly sub = 'Эрэг дээр дарж уснаас холд';
   readonly lose = 'Усанд орж, урсгалд автлаа!';
@@ -35,7 +36,7 @@ export class River implements Micro {
       this.x = Math.max(SAFE_X, this.x - dt * 160);
       if (this.x <= SAFE_X) { this.safe = true; ctl.win(); }
     } else {
-      this.x += dt * 18;
+      this.x += dt * 18 * (1 + (ctl.stage ?? 0) * .15);
       if (this.x >= WATER_X) this.enterWater();
     }
   }

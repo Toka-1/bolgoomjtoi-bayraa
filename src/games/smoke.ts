@@ -8,10 +8,11 @@ import { stove, pipe } from '../art/props';
 import { planks, skirting, mottle, puffSprite, drawPuff, ridge } from '../art/scenery';
 import type { Micro } from './types';
 
-const WX = 210, WY = 150, WW = 120, WH = 120;
-const DOOR = { x: 242, y: 285, w: 100, h: 215 };
+const WX = 110, WY = 275, WW = 100, WH = 105;
+const DOOR = { x: 242, y: 255, w: 100, h: 245 };
 
 export class Smoke implements Micro {
+  readonly focus = {zoom:1.04,y:405,height:400};
   readonly cmd = 'ГАДАГШ ГАР!';
   readonly sub = 'Хаалган дээр дарж гадагш гар';
   readonly lose = 'Гадагш гарч амжсангүй!';
@@ -22,9 +23,9 @@ export class Smoke implements Micro {
   private smoke = 0.15;
   private exit = 0;
 
-  init(): void { this.open = false; this.exit = 0; this.smoke = 0.15; }
+  init(): void { this.dead = false; this.open = false; this.exit = 0; this.smoke = 0.15 + (ctl.variation ?? 0) * .03; }
   update(dt: number): void {
-    this.smoke = Math.min(1, this.smoke + dt * 0.2);
+    this.smoke = Math.min(1, this.smoke + dt * (0.2 + (ctl.stage ?? 0) * .025));
   }
   down(x: number, y: number): void {
     if (!this.dead && !this.open && x >= DOOR.x && x <= DOOR.x + DOOR.w && y >= DOOR.y && y <= DOOR.y + DOOR.h) { this.open = true; ctl.win(); }
@@ -41,7 +42,7 @@ export class Smoke implements Micro {
     if (this.exit >= 1) {
       ctx.fillStyle = lin(0, 0, 0, H, [[0, '#83c8ef'], [1, '#eef9ff']]); ctx.fillRect(0, 0, W, H);
       ctx.fillStyle = '#8fbd62'; ctx.fillRect(0, 480, W, H - 480);
-      bayraa(245, 574, 1.65, { mood: 'happy' });
+      bayraa(245, 574, 1.15, { mood: 'happy' });
       return;
     }
     layer('smoke-room', paintRoom);
@@ -49,7 +50,7 @@ export class Smoke implements Micro {
     drawDoor(this.open);
     pipe(84, 0, 400, 22);
     stove(40, 390, 110, 110);
-    bayraa(184 + this.exit * 108, 575 - this.exit * 75, 1.65 - this.exit * 0.2, {
+    bayraa(184 + this.exit * 108, 575 - this.exit * 75, 1.15 - this.exit * 0.2, {
       mood: this.dead ? 'dead' : this.open ? 'happy' : 'scared',
       green: !this.open && this.smoke > 0.45, rot: this.dead ? -0.25 : 0,
     });
@@ -71,6 +72,7 @@ function paintRoom(): void {
   mottle(0, 0, W, 500, 21, '120,90,50', 60, 0.05);
   mottle(0, 0, W, 500, 22, '255,250,235', 40, 0.06);
   // framed photo of the steppe
+  ctx.save(); ctx.translate(46, 110); ctx.scale(.75, .75);
   ctx.fillStyle = 'rgba(40,25,10,.25)'; rr(124, 106, 72, 58, 3);
   ctx.fillStyle = lin(120, 0, 192, 0, [[0, '#7a4a26'], [1, '#4f2e14']]); rr(120, 100, 72, 58, 3);
   ctx.save(); ctx.beginPath(); ctx.rect(126, 106, 60, 46); ctx.clip();
@@ -79,6 +81,7 @@ function paintRoom(): void {
   ctx.fillStyle = '#86b84a'; ctx.fillRect(0, 150, W, 60);
   ctx.restore();
   ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.fillRect(126, 106, 60, 4);
+  ctx.restore();
   // window recess shadow
   ctx.fillStyle = 'rgba(60,40,20,.25)'; rr(WX - 10, WY - 8, WW + 22, WH + 24, 6);
   skirting(500);

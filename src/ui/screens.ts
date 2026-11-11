@@ -4,16 +4,19 @@ import { audioEnabled, canSpeak } from '../core/audio';
 import { drawCards, drawTopics, drawQuiz, drawPractice, SPEAK_BTN } from './meta';
 import { drawLesson, lessonButton, check, LESSON_CONTINUE, LESSON_REPLAY } from './lessons';
 import { progress } from '../meta/progress';
-import { TOPICS, INFO } from '../meta/content';
+import { TOPICS,infoOf } from '../meta/content';
+import { games } from '../games';
 
-const TOTAL_CARDS = Object.keys(INFO).length;
+const TOTAL_CARDS = games.length;
 import { PLAY_BTN, PRACTICE_BTN, CARDS_BTN, TEACH_BTN, AGAIN_BTN, HOME_BTN, HUD_HOME, HUD_SOUND, SOUND_BTN, goldFace, homeIcon, soundIcon, panel, button } from './widgets';
 export { type Btn, PLAY_BTN, AGAIN_BTN, HOME_BTN, HUD_HOME, inBtn, inHudHome } from './widgets';
 import { bayraa } from '../art/bayraa';
+import { OUTFITS, look } from '../art/look';
 import { ger } from '../art/props';
 import { sun, cloud, ridge, hills, grass, chimneySmoke, vignette, grain } from '../art/scenery';
 import { g } from '../flow';
 import { drawConsequence } from './consequences';
+import {drawLevelView,levelFrame} from './levelView';
 
 export function render(): void {
   ctx.save();
@@ -23,10 +26,11 @@ export function render(): void {
   else if (g.state === 'topics') drawTopics();
   else if (g.state === 'practice') drawPractice();
   else {
-    g.game.draw();
+    drawLevelView(g.game,g.state==='play');
     vignette();
-    if (g.state === 'play') g.game.danger?.();
     hud();
+    const frame=levelFrame(g.game);
+    if(frame.y>=126){const label=infoOf(g.game.cmd)?.card??'';text(label,W/2,frame.y-18,label.length>20?15:18,C.gold);}
     if (g.state === 'play') drawPlay();
     else if (g.state === 'result') drawResult();
     else if (g.state === 'quiz') drawQuiz();
@@ -56,12 +60,20 @@ function hud(): void {
   ctx.strokeStyle = 'rgba(120,70,0,.45)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(36, 36, 16, 0, Math.PI * 2); ctx.stroke();
   text(String(g.score), 36, 37, 20, C.ink);
   if (g.state !== 'over') { homeIcon(HUD_HOME.x, HUD_HOME.y, HUD_HOME.r); soundIcon(HUD_SOUND.x, HUD_SOUND.y, HUD_SOUND.r, audioEnabled()); }
-  if (g.practice) text('ДАДЛАГА', W - 62, 36, 14, '#fff', { stroke: C.ink, sw: 4 });
-  else for (let i = 0; i < 3; i++) heart(W - 30 - i * 32, 36, 11, i < g.lives);
+  for (let i = 0; i < 3; i++) heart(W - 30 - i * 32, 36, 11, i < g.lives);
+  const level = games.indexOf(g.game);
+  if (level >= 0) text(`${level + 1} / ${games.length}`, W / 2, 73, 12, '#fff', { stroke: C.ink, sw: 3 });
+  if (g.practice) text('ДАДЛАГА', W - 57, 73, 11, '#fff', { stroke: C.ink, sw: 3 });
 }
 
 function drawPlay(): void {
+  const frame=levelFrame(g.game);
+  ctx.save();ctx.translate(0,Math.min(616,frame.y+frame.h+20)-616);
   const f = 1 - g.frac, bw = W - 32;
+  for (let i = 0; i < 3; i++) {
+    ctx.fillStyle = i <= (g.practice ? 1 : Math.min(2, 1 + Math.floor(g.score / 6))) ? C.gold : 'rgba(27,31,59,.3)';
+    circ(W / 2 + (i - 1) * 12, 603, 3);
+  }
   ctx.fillStyle = 'rgba(27,31,59,.5)'; rr(16, 616, bw, 12, 6);
   ctx.fillStyle = f < 0.3 ? lin(0, 616, 0, 628, [[0, '#ff6a5c'], [1, '#b81a12']]) : goldFace(616, 628);
   rr(16, 616, Math.max(12, bw * f), 12, 6);
@@ -69,10 +81,21 @@ function drawPlay(): void {
   const sx = 16 + bw * f;
   ctx.fillStyle = rad(sx, 622, 14, [[0, 'rgba(255,240,180,.9)'], [1, 'rgba(255,160,40,0)']]); circ(sx, 622, 14);
   ctx.fillStyle = reduce ? '#fff' : `rgb(255,${(200 + Math.random() * 55) | 0},120)`; circ(sx, 622, 6);
+  ctx.restore();
 }
 
 function drawResult(): void {
   if (g.ok) {
+    // A different small celebration each win, with a static reduced-motion version.
+    for (let i = 0; i < 16; i++) {
+      const phase = reduce ? .5 : Math.min(1, g.st / 1.1);
+      const a = i * 2.399 + g.celebration;
+      const radius = 34 + phase * (75 + i % 3 * 18);
+      const x = W / 2 + Math.cos(a) * radius;
+      const y = 210 + Math.sin(a) * radius + phase * phase * 35;
+      ctx.fillStyle = ['#ffe58a', '#9ce3c4', '#fff', '#bdc9ff'][i % 4];
+      circ(x, y, 2 + i % 3);
+    }
     const pop = reduce ? 1 : 1 + 0.3 * Math.max(0, 1 - g.st * 5);
     ctx.save(); ctx.translate(W / 2, 250); ctx.scale(pop, pop);
     const size = g.winText.length > 8 ? 34 : 54;
@@ -85,6 +108,18 @@ function drawResult(): void {
       panel(-76, -57, 152, 114, 12, '#fff');
       drawLesson(g.game.cmd, -70, -51, 140, 102, 3);
       ctx.restore();
+    }
+    if (g.reward >= 0) {
+      const outfit = OUTFITS[g.reward];
+      panel(62, 462, 236, 126, 16, '#fff');
+      // Preview the earned reward without changing the saved selection.
+      const previous = look.outfit;
+      try {
+        look.outfit = outfit;
+        bayraa(120, 575, .72, { mood: 'happy' });
+      } finally { look.outfit = previous; }
+      text('ШИНЭ ХУВЦАС!', 218, 498, 15, C.ink);
+      text(outfit.label, 218, 529, 12, C.ink);
     }
     return;
   }

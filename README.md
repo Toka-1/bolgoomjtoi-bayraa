@@ -1,87 +1,85 @@
 # Болгоомжтой Баяраа
 
-Normal rounds start immediately without written instructions or an intro screen.
-The important object or safe action has a bright gold-and-white outline, without
-directional arrows or moving trails. Red lights and electrical hazards use a stop
-hand pictogram. Reduced-motion mode keeps the highlights static.
-The separate ДАДЛАГА button on the title opens
-a picture menu for all 19 games. Choose any round to practise without losing
-lives, gaining points or unlocking cards. A win returns to the practice menu;
-after a failure explanation, Continue retries the same practice round.
+The game has **30 playable levels**: the original 19 plus 11 new activities.
 
-After a mistake, replay the animated safety demonstration with the circular
-arrow or continue with the forward arrow after it finishes. Lessons stay on screen
-until continued. The collection cards show the same picture lessons; text remains
-as support for an adult. Reduced-motion mode shows the completed safe action.
+The new levels cover a bicycle helmet, stair handrails, sidewalk walking, knives,
+irons, hot kettles, broken glass, button batteries, plastic bags, medicine and
+ovens. Helmet and sidewalk levels use dragging; stairs use a sustained hold;
+household hazards reward asking the adult for help. Each has its own scene,
+safety card, teacher question, failure vignette and animated safe-action lesson.
 
-Read-aloud starts automatically when the device provides a Mongolian speech voice
-and sound is enabled. Picture lessons also work without speech or sound.
-The default children's game skips the reading quiz. Starting through teacher mode
-retains the text questions for adult-led play.
+Scored rounds begin immediately at 1.35× speed (about 3.7 seconds), with stronger
+mechanics from the first round. Speed increases every three wins, capped at 2.3×.
+After a failure and its animated lesson, Continue advances to another available
+level while lives remain. Three lost lives end the run. The shuffled bag visits
+all eligible levels before refilling and avoids immediate repeats when possible.
+
+Practice uses portrait previews of the actual gameplay scenes, not lesson art.
+Its in-level scene, hearts, timer, level number, difficulty dots and hazard cues
+share the scored-play layout. A small Mongolian badge identifies practice.
+Each level has its own focused camera and panel height. Object tasks use close
+views with less empty scenery; traffic and route levels retain the context they
+need. The timer follows the panel, and short-level titles sit above it. Practice
+previews use the same camera. Pointer coordinates are transformed back to scene
+coordinates, preserving touch dragging and right-click pickup/drop after zooming.
+Outdoor scenes have matching city, courtyard, park, steppe, snowy or riverbank
+backgrounds in play, practice previews, lessons and failure animations. Distant
+buildings, hills, trees, fences and pavement stay behind the interactive objects.
+Practice has five-second rounds at normal movement speed, no lost lives, no score
+or card rewards, and retries the selected activity after a failure explanation.
+A practice win returns to the level selection. Neither mode overlays gold
+answer highlights; the safe-action lessons remain available after mistakes.
+
+The card collection contains all 30 safety cards. Saved progress
+ignores retired cards in current totals. Outfit thresholds are 0, 3, 6, 10, 20 and 30
+cards, so every outfit is reachable. Locked outfit swatches preview their appearance
+and requirement without changing the selected outfit. Teacher mode filters only
+the home, street, countryside and summer topics and can enable reading quizzes.
+
+After a mistake, replay the animated safe action with the circular arrow or
+continue with the forward arrow after the demonstration finishes. Lessons wait
+until continued. They work without reading; Mongolian narration is available
+when the device provides a suitable voice. Reduced-motion mode shows static
+celebrations and completed safety demonstrations.
+Before the lesson, a 3.4-second consequence shows the mistake, physical reaction
+and aftermath. Falls finish, the river avatar sinks beneath the water with bubbles,
+burns cause a protected hand or foot, glass causes a limp, smoke causes coughing,
+and ingestion hazards cause sickness or breathing distress. Electrical reactions
+are reserved for electrical hazards. The eleven added levels have their own
+failure choreography; none uses the generic worried-character fallback. All
+consequences remain non-graphic, and reduced motion shows the final outcome.
 
 ## Controls
 
-Touch: tap the door to leave the room in the smoke level, tap the side opposite Bayraa's lean to keep balance on ice,
-drag the hat/baby into place, hold to brake for cattle, and tap only when the
-pedestrian light turns green. In the socket game, leave objects out of the socket.
-Picking up or moving the fork/key away is safe; inserting its tip causes a shock.
-The 🏠
-button in the HUD returns to the title screen.
+Touch or mouse: tap on green at the crossing, drag the hat onto the head, and tap
+the opposite half of the screen to balance on ice. Right-click picks up/drops the
+hat; held arrow keys can move a selected hat. Enter and Space do not select it.
+Cross with Space, Up or Enter. Balance with Left/Right. Escape cancels a held
+gesture, or returns home when nothing is held. Losing focus clears held input.
 
-Keyboard: Enter or Space starts/restarts the game, selects a practice round and continues
-a failure screen. Leave the room by clicking or tapping its door; use Left/Right to keep
-balance on ice. For the hat and baby, right-click the object to pick up, move the mouse,
-then right-click again to drop. Touch and left-button dragging also work. Hold Space or
-Down to brake. At the crossing, press Space/Up/Enter on green. The socket game also
-supports touch dragging and right-click pickup/drop; Enter/Space do not insert anything.
-Escape cancels a held gesture; with nothing held it returns
-to the title screen.
+## Development
 
-At the river, tap the dry bank or press Left to lead the child away from the water.
-Entering the river loses; there is no swimming or repeated-tap rescue mechanic.
-Use the separate practice menu to learn the updated smoke and river games.
-
-Only one pointer controls a gesture. Losing focus, hiding the tab, or cancelling
-a touch clears held controls without submitting a drop.
-
-Run `npm test` for gameplay/result separation and input regression checks
-(Node.js 24+). Run `npm run build` for type checking and the production build.
-
-Монгол амьдралын аюулгүй байдлын тухай утсан дээр тоглох жижиг тоглоомууд.
-
-## Ажиллуулах
+Use Node.js 24 or newer.
 
 ```sh
 npm install
-npm run dev        # http://localhost:5173 (утаснаасаа Network хаягаар нь нээж болно)
-npm run build      # dist/ хавтас руу статик хувилбар гаргана
-npm run preview    # build хийсэн хувилбарыг шалгах
+npm run dev
+npm test
+npm run build
+npm run preview
 ```
 
-Dev горимд `?g=0` … `?g=18` гэж нэмбэл тухайн мини тоглоом руу шууд орно.
+Development links: `?g=0` through `?g=29` select a level.
+The practice menu has ten pages of three portrait gameplay previews; the
+card collection has four pages. Touch and keyboard can reach every level.
+`?screen=cards|topics|quiz` opens the corresponding review screen.
 
-## Онцлог
+Scene proportions keep characters, vehicles, furniture and backgrounds at
+consistent relative scales. All 30 levels are included in the run, practice selection and collections.
+The eleven newest scenes use quieter scenery, clearer hazard silhouettes and a
+single compact stop cue beside each danger. Hot objects show heat; the sidewalk
+has a distinct curb and vehicle. Stair holds must touch the visible handrail.
+Tests cover input ownership, outcomes, failure progression, lessons, proportions,
+thirty-level roster, saved progress, reward reachability and preview isolation.
 
-- **16 мини тоглоом**: Гэрт, Хотод, Хөдөө, Зун гэсэн 4 сэдэвтэй. Дадлагыг нүүр хуудасны тусдаа товчоор сонгоно.
-- **Аюулгүй байдлын карт**: үе бүрийг анх давахад карт нээгдэнэ (нүүр хуудас → КАРТУУД). Карт цуглуулж Баяраагийн дээлийг сольдог (3, 6, 10 карт).
-- **Тоглолтын төгсгөлийн асуулт**: амь дуусахад тоглосон үеүдээс 3 асуулт; зөв хариулт бүр +1 оноо.
-- **Багшийн горим**: нүүр хуудас → БАГШ, тоглуулах сэдвээ сонгоно. Сонголт хадгалагдана.
-- **Дуу**: Web Audio-оор үүсгэсэн хөгжим, дуу (файлгүй). 🔊 товчоор унтраана. Төхөөрөмжид монгол дуу хоолой байвал зөвлөгөөг уншиж өгнө.
-- **PWA**: `npm run build`-ийн дараа утасны нүүр дэлгэцэнд суулгаж, интернетгүй тоглох боломжтой (service worker зөвхөн production дээр).
-
-Dev горимд: `?g=N` (N-р тоглоом), `&t=секунд` (урагш гүйлгэх), `&perf` (кадрын хугацаа), `?screen=cards|topics|quiz`.
-
-## Бүтэц
-
-- `src/core/`: canvas, зурах туслахууд, дуу, санамсаргүй тоо
-- `src/art/`: Баяраа, гэр, үхэр, машин, зуух, байгалийн зураг
-- `src/games/`: мини тоглоом бүр тусдаа файлд (`types.ts` дахь `Micro` интерфэйсийг хэрэгжүүлнэ)
-- `src/ui/screens.ts`: эхлэл, HUD, үр дүн, дууссан дэлгэц
-- `src/flow.ts`: тоглоомын урсгал (оноо, амь, хурд, асуулт)
-- `src/meta/`: карт, сэдэв, асуултын өгөгдөл (`content.ts`) ба хадгалалт (`progress.ts`)
-- `src/ui/meta.ts`: картууд, багшийн горим, асуултын дэлгэц
-- `public/`: PWA manifest, service worker, дүрсүүд
-
-Шинэ мини тоглоом нэмэх: `src/games/` дотор `Micro`-г хэрэгжүүлсэн класс бичээд `src/games/index.ts`-д нэм.
-
-Safety references for the added rounds: [NHTSA child safety](https://www.nhtsa.gov/road-safety/child-safety), [ESFI electrical safety](https://www.esfi.org/electrical-safety-dos/), and [winter ice safety](https://www.safety.af.mil/Divisions/Occupational-Safety-Division/Winter-Safety/Slips-Falls-on-Ice/).
+Safety references for the new lessons: [CDC bicycle helmets](https://www.cdc.gov/heads-up/safety/), [AAP home safety](https://www.healthychildren.org/English/safety-prevention/at-home/Pages/Home-Safety-Heres-How.aspx), [Nationwide Children?s stair safety](https://www.nationwidechildrens.org/research/areas-of-research/center-for-injury-research-and-policy/injury-topics/home-safety/stair-safety), [NHTSA pedestrian safety](https://www.nhtsa.gov/road-safety/pedestrian-safety), [NFPA hot objects](https://www.nfpa.org/downloadable-resources/lesson-plans/stay-away-from-hot-things-lesson-plan), and [children?s kitchen safety](https://www.nationwidechildrens.org/family-resources-education/700childrens/2018/04/kitchen-readiness-tips-to-keep-your-child-safe).

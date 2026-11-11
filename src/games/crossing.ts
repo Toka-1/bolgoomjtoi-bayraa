@@ -14,12 +14,13 @@ import type { Micro } from './types';
 const LANES = [{ y: 378, s: 1.9, dir: -1 }, { y: 452, s: 2.4, dir: 1 }] as const;
 /** The zebra crossing spans these x values; cars stop before it on green. */
 const ZEBRA_L = 122, ZEBRA_R = 238;
-const CAR_LEN = 80, GAP = 34, SPEED = 230;
+const CAR_LEN = 128, GAP = 34, SPEED = 230;
 const START_Y = 592, END_Y = 300;
 
 interface Car { x: number; lane: 0 | 1; paint: CarPaint; v: number }
 
 export class Crossing implements Micro {
+  readonly focus = {zoom:1,y:370,height:500};
   readonly cmd = 'НОГООНЫГ ХҮЛЭЭ!';
   readonly sub = 'Ногоон асахад дэлгэц дээр дар';
   readonly lose = 'Хоцорлоо!';
@@ -36,7 +37,8 @@ export class Crossing implements Micro {
   private crashed = false;
 
   init(): void {
-    this.t = 0; this.redT = rand(1.0, 2.2);
+    this.dead = false;
+    this.t = 0; this.redT = rand(1.0, 2.2) + (ctl.stage ?? 0) * .5;
     this.walking = false; this.walk = 0; this.hit = 0; this.crashed = false;
     this.spawn = [rand(0, 0.3), rand(0, 0.3)];
     // start with traffic already flowing
@@ -65,7 +67,11 @@ export class Crossing implements Micro {
       if (this.spawn[l] <= 0) {
         this.spawn[l] = rand(0.55, 1.1);
         const dir = LANES[l].dir;
-        this.cars.push({ x: dir > 0 ? -CAR_LEN * LANES[l].s - 10 : W + 10, lane: l, paint: pick(), v: SPEED });
+        const length = CAR_LEN * LANES[l].s;
+        const entry = dir > 0 ? -length - 10 : W + 10;
+        if (this.cars.every(c => c.lane !== l || Math.abs(c.x - entry) >= length + GAP)) {
+          this.cars.push({ x: entry, lane: l, paint: pick(), v: SPEED });
+        } else this.spawn[l] = .1;
       }
     }
     for (const l of [0, 1] as const) {
@@ -115,7 +121,7 @@ export class Crossing implements Micro {
     const k = this.crashed ? Math.min(this.walk, 0.12) : this.walk;
     const by = START_Y + (END_Y - START_Y) * k;
     // Follow the ground depth: a readable foreground child recedes toward the far pavement.
-    const bs = 1.45 - 0.7 * k;
+    const bs = 1.1 - 0.5 * k;
     const bob = this.walking && !this.dead && !reduce ? Math.abs(Math.sin(clock.t * 12)) * -3 : 0;
 
     const items: Array<[number, () => void]> = [];

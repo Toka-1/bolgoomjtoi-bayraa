@@ -6,4 +6,8 @@ export const ctl = {
   frac: 0,
   /** True while the player can act, outside menus and results. */
   playing: false,
+  /** Mechanic challenge: practice/early rounds 0, then 1 and 2. */
+  stage: 0,
+  /** Small layout/timing variation; zero in practice. */
+  variation: 0,
 };

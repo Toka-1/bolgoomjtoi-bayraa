@@ -3,6 +3,7 @@ import { unlockAudio } from './audio';
 import { g, startRun, afterResult, goHome } from '../flow';
 import { uiPress, uiKey } from '../ui/meta';
 import type { Micro } from '../games';
+import {inLevelView,levelToWorld} from '../ui/levelView';
 
 const CONTROL_KEYS = new Set(['Enter', ' ', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Escape', '1', '2', '3']);
 
@@ -31,8 +32,9 @@ export function installInput(): () => void {
       e.preventDefault(); cv.focus(); unlockAudio();
       const [x, y] = point(e);
       if (x < 0 || x > 360 || y < 0 || y > 640) return;
+      if (!inLevelView(x,y,g.game)) { if (selectedPointer===e.pointerId&&current()) clear(); return; }
       if (selectedPointer !== e.pointerId || !current()) { clear(); claim(); }
-      if (g.game.select(x, y)) selectedPointer = e.pointerId;
+      if (g.game.select(...levelToWorld(g.game,x,y))) selectedPointer = e.pointerId;
       else clear();
       return;
     }
@@ -45,20 +47,21 @@ export function installInput(): () => void {
     if (uiPress(x, y)) return;
     if (g.state === 'result') return;
     if (g.state !== 'play') return;
+    if (!inLevelView(x,y,g.game)) return;
     pointer = e.pointerId; claim();
     try { cv.setPointerCapture(e.pointerId); } catch { /* window release still handles it */ }
-    g.game.down?.(x, y);
+    g.game.down?.(...levelToWorld(g.game,x,y));
   });
   cv.addEventListener('pointermove', e => {
-    if ((e.pointerId === pointer || e.pointerId === selectedPointer) && current()) g.game.move?.(...point(e));
+    if ((e.pointerId === pointer || e.pointerId === selectedPointer) && current()) g.game.move?.(...levelToWorld(g.game,...point(e)));
   });
   cv.addEventListener('contextmenu', e => { if (g.game.select) e.preventDefault(); });
   addEventListener('pointerup', e => {
     if (e.pointerId !== pointer) return;
     if (current()) {
       // Use the final release position even if no last pointermove was delivered.
-      g.game.move?.(...point(e));
-      g.game.up?.(...point(e));
+      g.game.move?.(...levelToWorld(g.game,...point(e)));
+      g.game.up?.(...levelToWorld(g.game,...point(e)));
     }
     clear();
   });

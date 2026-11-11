@@ -31,7 +31,7 @@ const { Smoke } = load('games/smoke.ts', ['Smoke'], gameBindings);
 const smoke = new Smoke(); smoke.init();
 smoke.key?.('Enter', true); smoke.key?.(' ', true);
 assert.equal(ctl.wins, 2, 'Enter/Space cannot escape the room');
-for (const [x, y] of [[100, 400], [205, 210], [335, 210], [270, 145], [270, 275]]) smoke.down(x, y);
+for (const [x, y] of [[100, 400], [160, 325], [335, 210], [270, 145], [205, 275]]) smoke.down(x, y);
 assert.equal(ctl.wins, 2, 'window and scenery clicks cannot solve the smoke level');
 smoke.down(292, 390);
 assert.equal(ctl.wins, 3);
@@ -95,8 +95,8 @@ const far = crossing.cars.filter(c => c.lane === 0).sort((a,b) => a.x-b.x);
 assert.ok(near[0].x + CAR_LEN * LANES[1].s <= ZEBRA_L - 6 + 0.01, 'enlarged cars stop before the crossing');
 assert.ok(far[0].x >= ZEBRA_R + 6 - 0.01);
 crossing.cars = [
-  { x: 100, lane: 1, paint: [], v: 230 }, { x: -130, lane: 1, paint: [], v: 230 },
-  { x: 10, lane: 0, paint: [], v: 230 }, { x: 210, lane: 0, paint: [], v: 230 },
+  { x: 100, lane: 1, paint: [], v: 230 }, { x: 100-CAR_LEN*LANES[1].s-GAP-5, lane: 1, paint: [], v: 230 },
+  { x: 10, lane: 0, paint: [], v: 230 }, { x: 10+CAR_LEN*LANES[0].s+GAP+5, lane: 0, paint: [], v: 230 },
 ];
 for (let i = 0; i < 120; i++) {
   crossing.update(1 / 60);
@@ -204,7 +204,8 @@ let downs = 0, moves = 0, ups = 0, cancels = 0;
 const keyEvents = [];
 const inputGame = { down() { downs++; }, move() { moves++; }, up() { ups++; }, cancelInput() { cancels++; }, key(...args) { keyEvents.push(args); } };
 const g = { game: inputGame, state: 'play', round: 1, st: 0 };
-const { installInput } = load('core/input.ts', ['installInput'], { cv, view: { offX: 0, offY: 0, scale: 1 }, g, document: doc, addEventListener: win.addEventListener.bind(win), unlockAudio() {}, startRun() {}, afterResult() {}, beginPractice() {}, goHome() {}, uiPress() { return false; }, uiKey() { return false; } });
+const camera=load('ui/levelView.ts',['inLevelView','levelToWorld','worldToLevel'],{W:360,H:640});
+const { installInput } = load('core/input.ts', ['installInput'], { ...camera,cv, view: { offX: 0, offY: 0, scale: 1 }, g, document: doc, addEventListener: win.addEventListener.bind(win), unlockAudio() {}, startRun() {}, afterResult() {}, beginPractice() {}, goHome() {}, uiPress() { return false; }, uiKey() { return false; } });
 const sync = installInput();
 cv.emit('pointerdown', { pointerId: 90, button: 0, isPrimary: true, clientX: 100, clientY: 300 });
 const beforeResize = cancels;
@@ -252,3 +253,17 @@ win.emit('blur');
 cv.emit('pointermove', right);
 assert.equal(moves, beforeMove + 1, 'blur cancels mouse selection');
 console.log('Right-click selection checks passed.');
+
+// Camera scaling must affect drawing and pointer coordinates equally.
+g.state='play';doc.hidden=false;doc.activeElement=cv;inputGame.focus={zoom:1.35,y:390};
+let pickedPoint=null,droppedPoint=null;
+inputGame.down=(x,y)=>{pickedPoint=[x,y];};inputGame.up=(x,y)=>{droppedPoint=[x,y];};
+const [sx,sy]=camera.worldToLevel(inputGame,123,398);
+cv.emit('pointerdown',{...pointer(91),clientX:sx,clientY:sy});
+assert.ok(Math.hypot(pickedPoint[0]-123,pickedPoint[1]-398)<1e-8,'zoomed pickup follows the drawn object');
+const [ex,ey]=camera.worldToLevel(inputGame,218,451);
+win.emit('pointerup',{...pointer(91),clientX:ex,clientY:ey});
+assert.ok(Math.hypot(droppedPoint[0]-218,droppedPoint[1]-451)<1e-8,'zoomed final release follows the target');
+pickedPoint=null;cv.emit('pointerdown',{...pointer(92),clientX:180,clientY:70});
+assert.equal(pickedPoint,null,'header space cannot select a cropped object');
+console.log('Focused-view pickup, release and HUD exclusion passed.');

@@ -6,8 +6,10 @@ import { bayraa } from '../art/bayraa';
 import { manhole } from '../art/hazards';
 import { highlight } from '../ui/gesture';
 import type { Micro } from './types';
+import {outdoorBackdrop} from '../art/outdoors';
 
 export class Manhole implements Micro {
+  readonly focus = {zoom:1,y:440,height:420};
   readonly cmd = 'НҮХИЙГ ТОЙР!';
   readonly sub = 'Нүхний хажуугийн аюулгүй зам дээр дар';
   readonly lose = 'Нүхийг тойрч амжсангүй!';
@@ -37,6 +39,7 @@ export class Manhole implements Micro {
   draw(): void {
     layer('manhole-pavement', () => {
       ctx.fillStyle = lin(0, 0, 0, H, [[0, '#a8cbe3'], [1, '#e6edf3']]); ctx.fillRect(0, 0, W, H);
+      outdoorBackdrop('city',W,H,300);
       for (const [x, y, w, h, colour] of [[0, 155, 108, 145, '#b6a997'], [118, 126, 112, 174, '#b3bec8'], [242, 176, 118, 124, '#bfb59f']] as const) {
         ctx.fillStyle = colour; rr(x, y, w, h, 2);
         ctx.fillStyle = '#6c8ca1';

@@ -1,7 +1,9 @@
-import { ctx, W, H, reduce } from '../core/canvas';
+import { ctx, W, H, reduce, snapshot } from '../core/canvas';
+import { ctl } from '../core/ctl';
+import {drawLevelView} from './levelView';
 import { C, FONT, lin, rad, rr, circ, text, wrap } from '../core/draw';
 import { setAudioEnabled, speak, canSpeak, sfx } from '../core/audio';
-import { games } from '../games';
+import { games, type Micro } from '../games';
 import { TOPICS, infoOf } from '../meta/content';
 import { progress, toggleTopic, wear, setSound } from '../meta/progress';
 import { OUTFITS, look } from '../art/look';
@@ -22,19 +24,21 @@ const carded = games.filter(m => infoOf(m.cmd));
 /* ---------- cards ---------- */
 const CW = 104, CH = 108, GAP = 12, X0 = (W - (3 * CW + 2 * GAP)) / 2, Y0 = 92;
 let detail = -1;
+let outfitPreview = -1;
 
 function cardRect(i: number, count = carded.length): Btn {
   const row = Math.floor(i / 3), col = i % 3, inRow = Math.min(3, count - row * 3);
   const rowX = (W - (inRow * CW + (inRow - 1) * GAP)) / 2;
   return { x: inRow < 3 ? rowX + col * (CW + GAP) : X0 + col * (CW + GAP), y: Y0 + row * (CH + GAP), w: CW, h: CH };
 }
-const swatchAt = (i: number) => ({ x: 120 + i * 52, y: 604, r: 18 });
+const swatchAt = (i: number) => ({ x: 96 + i * 43, y: 604, r: 17 });
 const PAGE_SIZE = 9;
+const PRACTICE_SIZE = 3;
 const PREV_PAGE = { x: 70, y: 526, r: 24 }, NEXT_PAGE = { x: 290, y: 526, r: 24 };
 let cardPage = 0, practicePage = 0;
 
-function drawPages(page: number, count: number): void {
-  const pages = Math.ceil(count / PAGE_SIZE);
+function drawPages(page: number, count: number, size = PAGE_SIZE): void {
+  const pages = Math.ceil(count / size);
   if (pages <= 1) return;
   text(`${page + 1} / ${pages}`, W / 2, 526, 18, '#fff');
   for (const [b, dir, enabled] of [[PREV_PAGE, -1, page > 0], [NEXT_PAGE, 1, page + 1 < pages]] as const) {
@@ -46,14 +50,29 @@ function drawPages(page: number, count: number): void {
   }
 }
 
-function pageTap(page: number, count: number, x: number, y: number): number {
-  const last = Math.max(0, Math.ceil(count / PAGE_SIZE) - 1);
+function pageTap(page: number, count: number, x: number, y: number, size = PAGE_SIZE): number {
+  const last = Math.max(0, Math.ceil(count / size) - 1);
   if (inCircle(PREV_PAGE, x, y)) return Math.max(0, page - 1);
   if (inCircle(NEXT_PAGE, x, y)) return Math.min(last, page + 1);
   return page;
 }
 
 let practiceChoice = 0;
+function practiceRect(i: number, _count: number): Btn {
+  return { x: 20, y: 98 + i * 128, w: 320, h: 118 };
+}
+
+/** A separate instance keeps menu previews from changing the next playable round. */
+function practicePreview(m: Micro): HTMLCanvasElement {
+  return snapshot(`practice-scene:${m.cmd}:${look.outfit.id}`, .4, () => {
+    const previous = { playing: ctl.playing, frac: ctl.frac, stage: ctl.stage, variation: ctl.variation };
+    try {
+      ctl.playing = false; ctl.frac = 0; ctl.stage = 1; ctl.variation = 0;
+      const preview = new (m.constructor as new () => Micro)();
+      preview.init(); drawLevelView(preview,true);
+    } finally { Object.assign(ctl, previous); }
+  });
+}
 function fittedLabel(label: string, x: number, y: number, maxWidth: number, size: number, color: string = C.ink): void {
   ctx.font = `700 ${size}px ${FONT}`;
   const width = ctx.measureText(label).width;
@@ -64,18 +83,25 @@ export function drawPractice(): void {
   backIcon(BACK_BTN.x, BACK_BTN.y, BACK_BTN.r);
   text('ДАДЛАГА', W / 2, 38, 26, C.gold);
   text('Амь, оноо өөрчлөгдөхгүй', W / 2, 70, 14, '#fff', { w: 500 });
-  const visible = games.slice(practicePage * PAGE_SIZE, (practicePage + 1) * PAGE_SIZE);
+  const visible = games.slice(practicePage * PRACTICE_SIZE, (practicePage + 1) * PRACTICE_SIZE);
   visible.forEach((m, i) => {
-    const b = cardRect(i, visible.length);
+    const b = practiceRect(i, visible.length);
     ctx.fillStyle = '#fff'; rr(b.x, b.y, b.w, b.h, 12);
-    drawLesson(m.cmd, b.x + 6, b.y + 6, b.w - 12, 72, 3);
-    fittedLabel(infoOf(m.cmd)?.card ?? '', b.x + b.w / 2, b.y + 94, b.w - 12, 12);
-    if (practicePage * PAGE_SIZE + i === practiceChoice) {
+    const height = b.h - 12, width = height * W / H;
+    ctx.save(); ctx.beginPath(); ctx.roundRect(b.x + 6, b.y + 6, width, height, 8); ctx.clip();
+    ctx.drawImage(practicePreview(m), b.x + 6, b.y + 6, width, height); ctx.restore();
+    {
+      text(`${practicePage * PRACTICE_SIZE + i + 1} / ${games.length}`, b.x + 112, b.y + 30, 14, '#72818a');
+      fittedLabel(infoOf(m.cmd)?.card ?? '', b.x + 189, b.y + 52, 190, 21);
+      ctx.fillStyle = '#e8b653'; circ(b.x + 280, b.y + 89, 18);
+      ctx.fillStyle = C.ink; ctx.beginPath(); ctx.moveTo(b.x + 276, b.y + 80); ctx.lineTo(b.x + 288, b.y + 89); ctx.lineTo(b.x + 276, b.y + 98); ctx.closePath(); ctx.fill();
+    }
+    if (practicePage * PRACTICE_SIZE + i === practiceChoice) {
       ctx.strokeStyle = C.gold; ctx.lineWidth = 4;
       ctx.beginPath(); ctx.roundRect(b.x, b.y, b.w, b.h, 12); ctx.stroke();
     }
   });
-  drawPages(practicePage, games.length);
+  drawPages(practicePage, games.length, PRACTICE_SIZE);
 }
 
 export function drawCards(): void {
@@ -102,6 +128,12 @@ export function drawCards(): void {
     }
   });
   drawPages(cardPage, carded.length);
+  const preview = OUTFITS[outfitPreview] ?? look.outfit;
+  const worn = look.outfit;
+  try { look.outfit = preview; bayraa(115, 581, .42, { mood: 'happy' }); }
+  finally { look.outfit = worn; }
+  fittedLabel(preview.label, 235, 562, 190, 16, '#fff');
+  if (progress.cards.size < preview.need) text(`${progress.cards.size} / ${preview.need}`, 235, 581, 12, C.gold);
   // outfits unlocked by collecting cards
   text('Дээл:', 52, 604, 15, '#fff', { w: 700 });
   OUTFITS.forEach((f, i) => {
@@ -211,11 +243,11 @@ export function uiPress(x: number, y: number): boolean {
       return true;
     case 'practice': {
       if (inCircle(BACK_BTN, x, y)) { goHome(); return true; }
-      const page = pageTap(practicePage, games.length, x, y);
-      if (page !== practicePage) { practicePage = page; practiceChoice = page * PAGE_SIZE; return true; }
-      const visible = games.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
-      const i = visible.findIndex((_, k) => inBtn(cardRect(k, visible.length), x, y));
-      if (i >= 0) { practiceChoice = page * PAGE_SIZE + i; startPractice(practiceChoice); }
+      const page = pageTap(practicePage, games.length, x, y, PRACTICE_SIZE);
+      if (page !== practicePage) { practicePage = page; practiceChoice = page * PRACTICE_SIZE; return true; }
+      const visible = games.slice(page * PRACTICE_SIZE, (page + 1) * PRACTICE_SIZE);
+      const i = visible.findIndex((_, k) => inBtn(practiceRect(k, visible.length), x, y));
+      if (i >= 0) { practiceChoice = page * PRACTICE_SIZE + i; startPractice(practiceChoice); }
       return true;
     }
     case 'cards': {
@@ -230,7 +262,8 @@ export function uiPress(x: number, y: number): boolean {
       const local = visible.findIndex((_, k) => inBtn(cardRect(k, visible.length), x, y));
       const i = local < 0 ? -1 : cardPage * PAGE_SIZE + local;
       if (i >= 0 && progress.cards.has(carded[i].cmd)) { detail = i; g.st = 0; sfx('tap'); speak(carded[i].tip); return true; }
-      OUTFITS.forEach((f, k) => { if (inCircle(swatchAt(k), x, y) && wear(f.id)) sfx('tap'); });
+      const outfit = OUTFITS.findIndex((_, k) => Math.hypot(swatchAt(k).x - x, swatchAt(k).y - y) <= 21);
+      if (outfit >= 0) { outfitPreview = outfit; wear(OUTFITS[outfit].id); sfx('tap'); }
       return true;
     }
     case 'topics': {
@@ -269,9 +302,9 @@ export function uiKey(k: string): boolean {
   if (g.state === 'practice') {
     if (k === 'Enter' || k === ' ') startPractice(practiceChoice);
     else if (k.startsWith('Arrow')) {
-      const delta = k === 'ArrowLeft' ? -1 : k === 'ArrowRight' ? 1 : k === 'ArrowUp' ? -3 : 3;
+      const delta = k === 'ArrowLeft' ? -1 : k === 'ArrowRight' ? 1 : k === 'ArrowUp' ? -1 : 1;
       practiceChoice = (practiceChoice + delta + games.length) % games.length;
-      practicePage = Math.floor(practiceChoice / PAGE_SIZE);
+      practicePage = Math.floor(practiceChoice / PRACTICE_SIZE);
     }
     return true;
   }

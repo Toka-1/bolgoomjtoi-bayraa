@@ -8,6 +8,7 @@ import { highlight } from '../ui/gesture';
 import type { Micro } from './types';
 
 export class Balcony implements Micro {
+  readonly focus = {zoom:1.02,y:440,height:440};
   readonly cmd = 'ДОТОГШ ОР!';
   readonly sub = 'Хашлаганаас холдож том хүн дээр оч';
   readonly lose = 'Хашлаганаас холдож амжсангүй!';

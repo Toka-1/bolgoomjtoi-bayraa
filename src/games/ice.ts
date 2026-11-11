@@ -12,6 +12,7 @@ import type { Micro } from './types';
 const FALL = 0.75;
 
 export class Ice implements Micro {
+  readonly focus = {zoom:1.12,y:430,height:420};
   readonly cmd = 'ТЭНЦВЭРЭЭ БАРИ!';
   readonly sub = 'Хазайсны эсрэг тал руу дар';
   readonly lose = 'Хальтирч унлаа!';
@@ -37,9 +38,9 @@ export class Ice implements Micro {
     // a sudden slip every so often, stronger as the round goes on
     this.slipIn -= dt;
     if (this.slipIn <= 0) {
-      this.slipIn = 0.7 + Math.random() * 0.5;
+      this.slipIn = 0.7 + Math.random() * 0.5 - (ctl.stage ?? 0) * .1;
       this.slipDir = Math.random() < 0.5 ? -1 : 1;
-      this.w += this.slipDir * (0.7 + this.t * 0.08);
+      this.w += this.slipDir * (0.7 + this.t * 0.08 + (ctl.stage ?? 0) * .12);
       this.slip = 0.25;
     }
     // ice is unstable: leaning makes you lean more
@@ -99,7 +100,7 @@ export class Ice implements Micro {
 
 /** Balance gauge: needle shows the lean, red zones at the ends. */
 function meter(a: number, danger: number): void {
-  const cx = W / 2, cy = 210, R = 70, span = 1.1;
+  const cx = W / 2, cy = 335, R = 50, span = 1.1;
   ctx.lineCap = 'butt';
   ctx.lineWidth = 12;
   ctx.strokeStyle = 'rgba(27,31,59,.45)';

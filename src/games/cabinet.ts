@@ -17,7 +17,7 @@ const CAB = { x: 214, y: 140, w: 126, h: 160 };
 const SHELF: ReadonlyArray<readonly [number, number]> = [[244, 224], [300, 224], [272, 292]];
 const FLOOR_Y0 = 440, FLOOR_Y1 = 600;
 const BABY_V = 32, REACH = 28, GRAB = 36;
-const ITEM_SCALE = 0.95;
+const ITEM_SCALE = 0.7;
 const itemBottom = (kind: Kind): number => kind === 'lighter' ? 14 : kind === 'pills' ? 10 : 8;
 
 type Kind = 'matches' | 'pills' | 'lighter';
@@ -29,6 +29,7 @@ const LOSE: Record<Kind, string> = {
 interface Item { kind: Kind; x: number; y: number; stored: boolean; slot: number }
 
 export class Cabinet implements Micro {
+  readonly focus = {zoom:1,y:367};
   readonly cmd = 'ШҮҮГЭЭНД ХИЙ!';
   readonly sub = 'Аюултай зүйлсийг шүүгээ рүү чир';
   readonly lose = 'Амжсангүй!';
@@ -74,8 +75,9 @@ export class Cabinet implements Micro {
     const d = Math.hypot(dx, dy);
     if (d < REACH) { this.dead = true; this.grabbed = target; ctl.lose(LOSE[target.kind]); return; }
     if (this.arrival < 0.45) return;
-    this.bx += (dx / d) * BABY_V * dt;
-    this.by += (dy / d) * BABY_V * dt;
+    const crawl = BABY_V * (1 + (ctl.stage ?? 0) * .12);
+    this.bx += (dx / d) * crawl * dt;
+    this.by += (dy / d) * crawl * dt;
   }
   /** Cosmetic: the cabinet door swings shut once everything is stored. */
   resultUpdate(dt: number): void { if (this.stored === 3) this.door = Math.min(1, this.door + dt * 3); }
@@ -124,7 +126,7 @@ export class Cabinet implements Micro {
     const danger = this.dead || this.items.some(it => !it.stored && dist(it.x, it.y, this.bx, this.by) < 90);
     // Sort people and objects on their floor contact point so nearer things occlude farther ones.
     const actors: Array<[number, () => void]> = [];
-    actors.push([470, () => bayraa(112, 470, 1.5, { mood: this.stored === 3 ? 'happy' : danger ? 'scared' : 'ok', arms: danger ? 1 : 0 })]);
+    actors.push([470, () => bayraa(112, 470, 1.15, { mood: this.stored === 3 ? 'happy' : danger ? 'scared' : 'ok', arms: danger ? 1 : 0 })]);
     for (const [i, it] of this.items.entries()) if (!it.stored && it !== this.grabbed && i !== this.drag) {
       actors.push([it.y + itemBottom(it.kind) * ITEM_SCALE, () => {
         shadow(it.x, it.y + itemBottom(it.kind) * ITEM_SCALE, 14, 4, 0.3);

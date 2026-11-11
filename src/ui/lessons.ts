@@ -1,3 +1,5 @@
+import {extraLesson} from '../art/extra';
+import {outdoorBackdrop,outdoorFor} from '../art/outdoors';
 import { ctx, reduce } from '../core/canvas';
 import { C, rr, circ, ell, seg } from '../core/draw';
 import { bayraa, winterHat } from '../art/bayraa';
@@ -8,6 +10,17 @@ import { reversingCar, damagedCord, snowRoof, icicle } from '../art/prevention';
 
 /** A self-contained safe-action demonstration. Never advances or changes a live game. */
 export const LESSONS: Record<string, string> = {
+  "ДУУЛГАА ӨМС!": "extra:helmet",
+  "БАРИУЛААС БАРЬ!": "extra:stairs",
+  "ЯВГАН ЗАМААР ЯВ!": "extra:sidewalk",
+  "ХУТГАНД БҮҮ ХҮР!": "extra:knife",
+  "ИНДҮҮНЭЭС ХОЛД!": "extra:iron",
+  "ДАНХАНД БҮҮ ХҮР!": "extra:kettle",
+  "ХАГАРХАЙГААС ХОЛД!": "extra:glass",
+  "ЗАЙНД БҮҮ ХҮР!": "extra:battery",
+  "УУТААР БҮҮ ТОГЛО!": "extra:bag",
+  "ЭМИЙГ ТОМ ХҮН ӨГНӨ!": "extra:medicine",
+  "ШАРАХ ШҮҮГЭЭНЭЭС ХОЛД!": "extra:oven",
   'МАШИНЫ АРААС ХОЛД!': 'reversing', 'ЭВДЭРСЭН УТАСНААС ХОЛД!': 'cord', 'ДЭЭВРЭЭС ХОЛД!': 'icicles',
   'ГАДАГШ ГАР!': 'smoke', 'ТЭНЦВЭРЭЭ БАРИ!': 'ice', 'БИТГИЙ ХҮР!': 'socket',
   'МАЛГАЙГАА ӨМС!': 'hat', 'МАЛЫГ ХҮЛЭЭ!': 'cow', 'ХҮҮХДИЙГ ХАМГААЛ!': 'baby',
@@ -65,22 +78,39 @@ export function drawLesson(cmd: string, x: number, y: number, w: number, h: numb
   ctx.translate((w - 320 * scale) / 2, (h - 240 * scale) / 2); ctx.scale(scale, scale);
   ctx.fillStyle = '#e9f3ff'; ctx.fillRect(0, 0, 320, 240);
   ctx.fillStyle = '#d1e5c7'; ctx.fillRect(0, 190, 320, 50);
+  const outside=outdoorFor(kind);if(outside)outdoorBackdrop(outside);
+  if (['smoke', 'socket', 'baby', 'cabinet', 'drink', 'cleaner', 'cord'].includes(kind)) {
+    // A common room plane keeps the furniture and people in the same space.
+    ctx.fillStyle = '#eee1cc'; ctx.fillRect(0, 0, 320, 190);
+    ctx.fillStyle = '#caa57e'; ctx.fillRect(0, 190, 320, 50);
+    ctx.fillStyle = '#a68869'; ctx.fillRect(0, 187, 320, 4);
+    ctx.strokeStyle = 'rgba(115,80,45,.2)'; ctx.lineWidth = 1;
+    for (const bx of [-100, 40, 160, 280, 420]) seg(160 + (bx - 160) * .55, 191, bx, 240);
+    seg(0, 211, 320, 211); seg(0, 233, 320, 233);
+    if (kind === 'cleaner' || kind === 'drink') {
+      ctx.fillStyle = '#8fa9ad'; rr(189, 27, 89, 85, 4);
+      ctx.fillStyle = '#d2ebed'; rr(195, 33, 77, 73, 2);
+      ctx.strokeStyle = '#f9f3e5'; ctx.lineWidth = 4;
+      seg(233, 33, 233, 106); seg(195, 70, 272, 70);
+      ctx.fillStyle = '#f9f3e5'; rr(184, 111, 99, 6, 2);
+    }
+  }
   switch (kind) {
     case 'reversing':
       ctx.fillStyle = '#b4b8b3'; rr(170, 160, 150, 80, 0);
-      reversingCar(225, 222, 2.1);
+      reversingCar(225, 222, 2.6);
       caregiver(43, 217, 1.05);
-      bayraa(174 - p * 59, 222, .85, { mood: 'happy' });
+      bayraa(174 - p * 59, 222, .95, { mood: 'happy' });
       break;
     case 'cord':
       damagedCord(245, 202, .65);
       caregiver(43, 217, 1.05);
-      bayraa(161 - p * 46, 222, .85, { mood: 'happy', arms: p * .5 });
+      bayraa(161 - p * 46, 222, .95, { mood: 'happy', arms: p * .5 });
       break;
     case 'icicles':
-      snowRoof(187, 35, 120); icicle(272, 50, 56);
+      snowRoof(187, 35, 120, -1, 187); icicle(272, 50, 56);
       caregiver(43, 217, 1.05);
-      bayraa(176 - p * 61, 222, .85, { mood: 'happy', hat: 'winter' });
+      bayraa(176 - p * 61, 222, .95, { mood: 'happy', hat: 'winter' });
       break;
     case 'seatbelt':
       boosterSeat(160, 180, 0.7);
@@ -100,10 +130,10 @@ export function drawLesson(cmd: string, x: number, y: number, w: number, h: numb
       bayraa(225 - p * 112, 226, 0.95, { mood: 'happy' });
       break;
     case 'cleaner': {
-      caregiver(48, 222, 1.2);
+      caregiver(48, 222, 1.05);
       ctx.fillStyle = '#a87b4e'; rr(150, 142, 151, 78, 5);
       ctx.fillStyle = '#d6dbd2'; rr(146, 130, 159, 13, 4);
-      ctx.fillStyle = '#8198a0'; ell(225, 128, 36, 5);
+      ctx.fillStyle = '#8198a0'; ell(225, 128, 27, 4);
       ctx.fillStyle = '#514536'; rr(158, 150, 135, 62, 3);
       cleaningBottle(201, 207, .65); cleaningBottle(257, 207, .6);
       baby(112, 230, 0);
@@ -121,7 +151,7 @@ export function drawLesson(cmd: string, x: number, y: number, w: number, h: numb
     case 'drink':
       caregiver(49 + p * 93, 205, 1.1);
       ctx.fillStyle = '#a6794b'; rr(128, 138, 173, 13, 4); rr(137, 151, 10, 70, 2); rr(282, 151, 10, 70, 2);
-      hotCup(265 - p * 85, 138 - Math.sin(p * Math.PI) * 12, 0.8);
+      hotCup(265 - p * 85, 138 - Math.sin(p * Math.PI) * 12, 0.42);
       baby(265, 230, 0);
       break;
     case 'manhole':
@@ -151,7 +181,7 @@ export function drawLesson(cmd: string, x: number, y: number, w: number, h: numb
       ctx.globalAlpha = .35 * (1 - p); ctx.fillStyle = '#65707a';
       for (let i = 0; i < 4; i++) ell(50 + i * 30, 120 - i * 17, 35, 22);
       ctx.restore();
-      bayraa(112 + p * 162, 222, 1, { mood: p > .7 ? 'happy' : 'scared' });
+      bayraa(112 + p * 162, 222, .85, { mood: p > .7 ? 'happy' : 'scared' });
       break;
     case 'ice':
       ctx.fillStyle = '#b9e6fa'; ell(160, 219, 130, 17);
@@ -160,10 +190,10 @@ export function drawLesson(cmd: string, x: number, y: number, w: number, h: numb
       for (let i = 0; i < 5; i++) ell(110 + i * 16, 224 + (i % 2) * 7, 4, 7);
       break;
     case 'socket':
-      ctx.fillStyle = '#fff'; rr(225, 100, 49, 49, 7);
-      ctx.fillStyle = C.ink; circ(241, 124, 3); circ(258, 124, 3);
+      ctx.fillStyle = '#fff'; rr(238, 154, 24, 26, 4);
+      ctx.fillStyle = C.ink; circ(246, 168, 2); circ(254, 168, 2);
       caregiver(43, 222, 1.05);
-      bayraa(166 - p * 48, 222, .85, { mood: 'happy', arms: p * .3 });
+      bayraa(166 - p * 48, 222, .95, { mood: 'happy', arms: p * .3 });
       // Metal stays on the floor. The child leaves it alone and tells an adult.
       ctx.strokeStyle = '#778da4'; ctx.lineWidth = 4;
       seg(234, 195, 260, 209);
@@ -171,8 +201,8 @@ export function drawLesson(cmd: string, x: number, y: number, w: number, h: numb
       break;
     case 'cow': {
       ctx.fillStyle = '#596578'; ctx.fillRect(0, 136, 320, 68);
-      const cx = t < 0.75 ? 30 : 30 + (t - 0.75) * 560;
-      car(cx, 191, t < 0.75);
+      const cx = t < 0.75 ? 15 : 15 + (t - 0.75) * 560;
+      ctx.save(); ctx.translate(cx, 191); ctx.scale(1.1, 1.1); car(0, 0, t < 0.75); ctx.restore();
       cow(200, 137 + p * 140, 0.75);
       if (t < 0.75) { ctx.fillStyle = '#c63431'; circ(67, 92, 25); ctx.fillStyle = '#fff'; rr(48, 87, 38, 9, 3); }
       break;
@@ -180,10 +210,13 @@ export function drawLesson(cmd: string, x: number, y: number, w: number, h: numb
     case 'crossing':
       ctx.fillStyle = '#596578'; ctx.fillRect(0, 116, 320, 88);
       ctx.fillStyle = '#fff'; for (let i = 0; i < 4; i++) ctx.fillRect(131, 122 + i * 21, 58, 11);
+      // Stopped cars establish the child's size and leave the zebra crossing clear.
+      ctx.save(); ctx.translate(-105, 180); ctx.scale(1.6, 1.6); car(0, 0, true); ctx.restore();
+      ctx.save(); ctx.translate(421, 180); ctx.scale(-1.6, 1.6); car(0, 0, true); ctx.restore();
       ctx.fillStyle = C.ink; rr(244, 27, 46, 91, 8);
       ctx.fillStyle = t < 0.4 ? '#ee473f' : '#6b292d'; circ(267, 50, 14);
       ctx.fillStyle = t >= 0.4 ? '#43d477' : '#27533d'; circ(267, 93, 14);
-      bayraa(160, 228 - phase(.45, .35) * 110, .9 - phase(.45, .35) * .25, { mood: 'happy' });
+      bayraa(160, 228 - phase(.45, .35) * 110, .8 - phase(.45, .35) * .25, { mood: 'happy' });
       break;
     case 'dust':
       ger(235, 192, 1.05);
@@ -214,7 +247,8 @@ export function drawLesson(cmd: string, x: number, y: number, w: number, h: numb
       for (let i = 0; i < 3; i++) seg(214 + i * 28, 202 + (i % 2) * 15, 234 + i * 28, 202 + (i % 2) * 15);
       break;
     default:
-      bayraa(160, 220, 1.6, { mood: 'happy', wave: true });
+      if (kind?.startsWith('extra:')) extraLesson(kind.slice(6) as import('../meta/extra').ExtraKind, p);
+      else bayraa(160, 220, 1.6, { mood: 'happy', wave: true });
   }
   // A shape as well as colour confirms the demonstrated safe action.
   if (t >= 1) check(289, 212, 19);

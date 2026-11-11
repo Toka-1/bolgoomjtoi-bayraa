@@ -91,8 +91,10 @@ export const CAR_PAINTS: readonly CarPaint[] = [
 
 /** A sedan seen from the side, facing right. (x, y) is the rear bumper at road level. */
 export function car(x: number, y: number, brake: boolean, shake = 0, paint: CarPaint = CAR_RED): void {
-  shadow(x + 40, y + 1, 46, 6, 0.45);
+  // 128 units bumper to bumper; preserve round wheels while lengthening the body.
+  shadow(x + 64, y + 1, 73.6, 6, 0.45);
   ctx.save(); ctx.translate(x + shake, y);
+  ctx.save(); ctx.scale(1.6, 1);
   ctx.beginPath();
   ctx.moveTo(2, -12); ctx.lineTo(2, -26); ctx.quadraticCurveTo(2, -32, 10, -33); ctx.lineTo(19, -34);
   ctx.lineTo(27, -50); ctx.quadraticCurveTo(29, -54, 34, -54); ctx.lineTo(52, -54);
@@ -108,8 +110,10 @@ export function car(x: number, y: number, brake: boolean, shake = 0, paint: CarP
   ctx.lineTo(51, -51); ctx.quadraticCurveTo(54, -51, 56, -48); ctx.lineTo(63, -35); ctx.closePath();
   ctx.fillStyle = lin(0, -51, 0, -35, [[0, '#a9d2ee'], [1, '#34587c']]); ctx.fill();
   ctx.save(); ctx.clip();
+  ctx.save(); ctx.translate(50, -42); ctx.scale(1 / 1.6, 1); ctx.translate(-50, 42);
   ctx.fillStyle = rad(50, -42, 7, [[0, '#ffd9b5'], [1, '#c98d66']], 48, -45); circ(50, -42, 6.5);
   ctx.fillStyle = C.hair; ctx.beginPath(); ctx.arc(50, -43, 6.8, Math.PI, 0); ctx.fill();
+  ctx.restore();
   ctx.fillStyle = 'rgba(255,255,255,.28)';
   ctx.beginPath(); ctx.moveTo(30, -35); ctx.lineTo(40, -51); ctx.lineTo(46, -51); ctx.lineTo(36, -35); ctx.fill();
   ctx.restore();
@@ -121,8 +125,9 @@ export function car(x: number, y: number, brake: boolean, shake = 0, paint: CarP
   ctx.fillStyle = brake ? '#ff3030' : '#8e0f0f'; rr(1, -28, 4, 7, 2);
   if (brake) glow(3, -24, 26, '255,40,40', 0.7);
   ctx.fillStyle = '#26262c'; rr(0, -14, 9, 5, 2); rr(71, -14, 9, 5, 2);
+  ctx.restore();
   const spin = x / 9;
-  wheel(18, -6, 9, spin); wheel(60, -6, 9, spin);
+  wheel(28.8, -6, 9, spin); wheel(96, -6, 9, spin);
   ctx.restore();
 }
 function wheel(x: number, y: number, r: number, rot: number): void {
@@ -135,9 +140,9 @@ function wheel(x: number, y: number, r: number, rot: number): void {
 }
 
 /* ---------- baby & cradle ---------- */
-export function baby(bx: number, by: number, crawl: number, onGround = true): void {
+export function baby(bx: number, by: number, crawl: number, onGround = true, reaction?: 'sick' | 'hurt'): void {
   if (onGround) shadow(bx + 4, by + 1, 36, 5, 0.3);
-  const skin = (x: number, y: number, r: number) => rad(x, y, r, [[0, '#ffe0c4'], [0.65, C.skin], [1, '#cf9470']], x - r * 0.35, y - r * 0.4);
+  const skin = (x: number, y: number, r: number) => rad(x, y, r, [[0, reaction==='sick'?'#e1e7b7':'#ffe0c4'], [0.65, reaction==='sick'?'#bdcb95':C.skin], [1, '#cf9470']], x - r * 0.35, y - r * 0.4);
   ctx.fillStyle = skin(bx + 31, by - 4, 5); circ(bx + 31, by - 4, 5);
   ctx.fillStyle = rad(bx + 10, by - 12, 27, [[0, '#ffd6e4'], [0.6, '#f4a6c0'], [1, '#c4708f']], bx + 3, by - 22);
   ell(bx + 10, by - 12 + crawl, 24, 14);
@@ -148,7 +153,9 @@ export function baby(bx: number, by: number, crawl: number, onGround = true): vo
   ctx.fillStyle = lin(bx - 32, 0, bx, 0, [[0, '#ffc0d6'], [1, '#d97c9f']]);
   ctx.beginPath(); ctx.arc(bx - 16, by - 23, 15.5, Math.PI, 0); ctx.fill();
   ctx.fillStyle = '#fff'; circ(bx - 16, by - 39, 4);
-  ctx.fillStyle = '#1b130e'; circ(bx - 21, by - 18, 2.2); circ(bx - 12, by - 18, 2.2);
+  ctx.fillStyle = '#1b130e';
+  if(reaction){ctx.strokeStyle='#403328';ctx.lineWidth=2;seg(bx-24,by-18,bx-18,by-18);seg(bx-15,by-18,bx-9,by-18);ctx.beginPath();ctx.arc(bx-16,by-10,4,Math.PI,Math.PI*2);ctx.stroke();}
+  else {circ(bx - 21, by - 18, 2.2); circ(bx - 12, by - 18, 2.2);}
   ctx.fillStyle = '#fff'; circ(bx - 21.7, by - 18.8, 0.8); circ(bx - 12.7, by - 18.8, 0.8);
   ctx.fillStyle = 'rgba(232,110,96,.45)'; circ(bx - 25, by - 13, 3.5); circ(bx - 8, by - 13, 3.5);
 }

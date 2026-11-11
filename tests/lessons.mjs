@@ -9,7 +9,7 @@ function load(file, names, bindings) {
 let depth=0, drawings=0;
 const finite=(...args)=>{for(const a of args) if(typeof a==='number') assert.ok(Number.isFinite(a)); drawings++;};
 const ctx=new Proxy({save(){depth++;},restore(){depth--;assert.ok(depth>=0);}}, {get(o,k){return k in o?o[k]:finite;},set(o,k,v){o[k]=v;return true;}});
-const assets={ctx,reduce:false,C:{ink:'#123',gold:'#fc0'},rr:finite,circ:finite,ell:finite,seg:finite,bayraa:finite,caregiver:finite,noSwimmingSign:finite,winterHat:finite,baby:finite,cradle:finite,stove:finite,car:finite,cow:finite,ger:finite,dog:finite,hotCup:finite,manhole:finite,cleaningBottle:finite,boosterSeat:finite,reversingCar:finite,damagedCord:finite,snowRoof:finite,icicle:finite};
+const assets={outdoorFor:()=>undefined,outdoorBackdrop:finite,extraConsequence:finite,extraLesson:finite,ctx,reduce:false,C:{ink:'#123',gold:'#fc0'},rr:finite,circ:finite,ell:finite,seg:finite,bayraa:finite,caregiver:finite,noSwimmingSign:finite,winterHat:finite,baby:finite,cradle:finite,stove:finite,car:finite,cow:finite,ger:finite,dog:finite,hotCup:finite,manhole:finite,cleaningBottle:finite,boosterSeat:finite,reversingCar:finite,damagedCord:finite,snowRoof:finite,icicle:finite};
 const lessons=load('ui/lessons.ts',['LESSONS','drawLesson','LESSON_CONTINUE','LESSON_REPLAY'],assets);
 const {INFO}=load('meta/content.ts',['INFO'],{});
 assert.deepEqual(Object.keys(lessons.LESSONS).sort(),Object.keys(INFO).sort(),'every topic has a picture lesson');
@@ -68,7 +68,7 @@ for (const cmd of Object.keys(INFO)) for (const failure of ['mistake', 'timeout'
  if (failure === 'last-life') assert.equal(f.g.lives,0);
  let shown = null, effect = null;
  const screen = load('ui/screens.ts',['drawResult'],{
-   ctx,reduce:false,W:360,H:640,INFO,g:f.g,C:{ink:'#123',gold:'#fc0'},
+   ctx,reduce:false,W:360,H:640,INFO,games:[],g:f.g,C:{ink:'#123',gold:'#fc0'},
    text(){},drawConsequence(id){effect=id;},drawLesson(id){shown=id;},lessonButton(){},canSpeak(){return false;},
    LESSON_CONTINUE:lessons.LESSON_CONTINUE,LESSON_REPLAY:lessons.LESSON_REPLAY,
  });
@@ -88,7 +88,7 @@ for(const cmd of Object.keys(INFO)) for(const time of [0,.8,1.8,2.4]) {
 const quietEffects=load('ui/consequences.ts',['drawConsequence'],{...assets,reduce:true,LESSONS:lessons.LESSONS});
 for(const cmd of Object.keys(INFO)) quietEffects.drawConsequence(cmd,18,158,324,288,0);
 assert.equal(depth,0);
-console.log('All 19 consequences and reduced-motion alternatives render.');
+console.log('All '+Object.keys(INFO).length+' consequences and reduced-motion alternatives render.');
 
 for (const time of [0,.2,.5,1,1.05]) assert.equal(effects.consequenceMotion(time,false).reaction,0,'reaction follows exposure');
 assert.equal(effects.consequenceMotion(1.05,false).approach,1);

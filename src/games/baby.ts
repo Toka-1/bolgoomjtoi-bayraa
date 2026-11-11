@@ -11,6 +11,7 @@ import type { Micro } from './types';
 import { DragKeys } from '../core/dragKeys';
 
 export class Baby implements Micro {
+  readonly focus = {zoom:1.04,y:405,height:420};
   readonly cmd = 'ХҮҮХДИЙГ ХАМГААЛ!';
   readonly sub = 'Хүүхдийг өлгийд нь чирж хий';
   readonly lose = 'Түлэгдчихлээ!';
@@ -20,7 +21,7 @@ export class Baby implements Micro {
   private arrows = new DragKeys();
   private bx = 290; private by = 545; private drag = false; private safe = false;
 
-  init(): void { this.bx = 290; this.by = 545; this.cancelInput(); this.safe = false; }
+  init(): void { this.dead = false; this.bx = 290; this.by = 545; this.cancelInput(); this.bx += (ctl.variation ?? 0) * 15; this.safe = false; }
   update(dt: number): void {
     if (this.drag) {
       const [dx, dy] = this.arrows.delta(dt);
@@ -28,7 +29,7 @@ export class Baby implements Micro {
       this.by = Math.max(140, Math.min(H - 40, this.by + dy));
     }
     if (this.drag || this.safe || this.dead) return;
-    this.bx -= 30 * dt;
+    this.bx -= 30 * (1 + (ctl.stage ?? 0) * .12) * dt;
     if (this.bx < 150) { this.dead = true; ctl.lose(this.lose); }
   }
   down(x: number, y: number): void { if (!this.safe && !this.dead && dist(x, y, this.bx, this.by - 16) < 50) this.drag = true; }
@@ -68,7 +69,7 @@ export class Baby implements Micro {
       for (let y = 0; y < 50; y += 5) ctx.lineTo(62 + i * 30 + Math.sin(y / 6 + clock.t * 8) * 4, 430 - y);
       ctx.stroke();
     }
-    bayraa(185, 552, 1.5, { mood: this.dead || !this.safe ? 'scared' : 'happy', arms: this.dead ? 1 : 0 });
+    bayraa(185, 552, 1.15, { mood: this.dead || !this.safe ? 'scared' : 'happy', arms: this.dead ? 1 : 0 });
     const crawl = this.drag || this.safe || reduce ? 0 : Math.sin(clock.t * 10) * 2;
     if (this.drag) shadow(this.bx + 4, Math.max(this.by + 30, 560), 30, 5, 0.2);
     baby(this.bx, this.by, crawl, !this.drag && !this.safe);
@@ -84,29 +85,31 @@ function paintGer(): void {
   ctx.lineCap = 'round';
   for (let i = -6; i <= 16; i++) {
     const x0 = 180 + i * 6, x1 = -200 + i * 36;
-    ctx.strokeStyle = 'rgba(80,40,10,.25)'; ctx.lineWidth = 5; seg(x0 + 2, -40, x1 + 2, 114);
-    ctx.strokeStyle = lin(x0, -40, x1, 114, [[0, '#d0671a'], [1, '#f08a2a']]); ctx.lineWidth = 3.5; seg(x0, -40, x1, 114);
+    ctx.strokeStyle = 'rgba(80,40,10,.25)'; ctx.lineWidth = 5; seg(x0 + 2, 112, x1 + 2, 284);
+    ctx.strokeStyle = lin(x0, 112, x1, 284, [[0, '#d0671a'], [1, '#f08a2a']]); ctx.lineWidth = 3.5; seg(x0, 112, x1, 284);
   }
+  ctx.strokeStyle = '#995e2d'; ctx.lineWidth = 9;
+  ctx.beginPath(); ctx.ellipse(180, 112, 42, 14, 0, 0, Math.PI * 2); ctx.stroke();
   // lattice wall (хана)
-  ctx.save(); ctx.beginPath(); ctx.rect(0, 120, W, 348); ctx.clip();
-  ctx.fillStyle = 'rgba(110,70,30,.08)'; ctx.fillRect(0, 120, W, 348);
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 290, W, 178); ctx.clip();
+  ctx.fillStyle = 'rgba(110,70,30,.08)'; ctx.fillRect(0, 290, W, 178);
   for (const [dx, a] of [[1.5, 'rgba(80,40,10,.3)'], [0, '']] as const) {
     for (let x = -360; x < W + 360; x += 34) {
       ctx.lineWidth = 3;
-      ctx.strokeStyle = a || lin(x, 120, x + 350, 470, [[0, '#c48850'], [1, '#e2a76a']]);
-      seg(x + dx, 120 + dx, x + 350 + dx, 470 + dx);
-      ctx.strokeStyle = a || lin(x, 470, x + 350, 120, [[0, '#b77b44'], [1, '#d99c5e']]);
-      seg(x + dx, 470 + dx, x + 350 + dx, 120 + dx);
+      ctx.strokeStyle = a || lin(x, 290, x + 180, 470, [[0, '#c48850'], [1, '#e2a76a']]);
+      seg(x + dx, 290 + dx, x + 180 + dx, 470 + dx);
+      ctx.strokeStyle = a || lin(x, 470, x + 180, 290, [[0, '#b77b44'], [1, '#d99c5e']]);
+      seg(x + dx, 470 + dx, x + 180 + dx, 290 + dx);
     }
   }
   // pins where the laths cross
   ctx.fillStyle = '#6e4220';
   for (let a = -360; a < W + 360; a += 34) for (let b = -360; b < W + 360; b += 34) {
-    const px = (350 + a + b) / 2, py = 120 + px - a;
-    if (px > -4 && px < W + 4 && py > 120 && py < 468) rr(px - 1.6, py - 1.6, 3.2, 3.2, 1);
+    const px = (180 + a + b) / 2, py = 290 + px - a;
+    if (px > -4 && px < W + 4 && py > 290 && py < 468) rr(px - 1.6, py - 1.6, 3.2, 3.2, 1);
   }
   ctx.restore();
-  ctx.fillStyle = lin(0, 110, 0, 124, [[0, '#d4884a'], [0.5, '#a8622c'], [1, '#7a431a']]); ctx.fillRect(0, 110, W, 14);
+  ctx.fillStyle = lin(0, 280, 0, 294, [[0, '#d4884a'], [0.5, '#a8622c'], [1, '#7a431a']]); ctx.fillRect(0, 280, W, 14);
   ctx.fillStyle = lin(0, 464, 0, 478, [[0, '#d4884a'], [0.5, '#a8622c'], [1, '#7a431a']]); ctx.fillRect(0, 464, W, 14);
   // The cradle sits on a low base on the same floor as the stove and people.
   perspectiveFloor(476, '#b77b51');
