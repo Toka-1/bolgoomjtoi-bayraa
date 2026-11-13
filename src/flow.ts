@@ -3,7 +3,7 @@ import { sfx } from './core/audio';
 import { games, type Micro } from './games';
 import { meta, type QuizItem } from './meta/hooks';
 
-export type State = 'title' | 'practice' | 'play' | 'result' | 'quiz' | 'over' | 'cards' | 'topics';
+export type State = 'title' | 'practice' | 'play' | 'result' | 'quiz' | 'over' | 'cards' | 'topics' | 'progress';
 
 export const g = {
   state: 'title' as State,
@@ -79,6 +79,7 @@ function prepareRound(): void {
   g.dur = g.practice ? 5 : 5 / g.speed;
   g.frac = 0;
   sfx('go');
+  meta.announce?.(g.game.cmd);
 }
 
 function win(): void {
@@ -88,6 +89,7 @@ function win(): void {
   ctl.playing = false; g.game.cancelInput?.();
   g.winText = g.game.winText ?? ['ЗӨВ!', 'ГОЁ!', 'САЙН БАЙНА!'][Math.floor(Math.random() * 3)];
   g.faster = false;
+  meta.record?.(g.game.cmd, true);
   g.newCard = !g.practice && meta.unlock(g.game.cmd);
   if (g.newCard) g.reward = meta.reward?.() ?? -1;
   if (g.reward >= 0) g.resDur = 2.8;
@@ -105,6 +107,10 @@ function lose(msg: string): void {
   g.state = 'result'; g.ok = false; g.msg = msg; g.st = 0; g.resDur = Infinity;
   g.lessonNarrated = false;
   if (!g.practice) g.lives--;
+  meta.record?.(g.game.cmd, false);
+  // Spaced retry: a missed hazard returns later in the same run (never straight away).
+  const missed = games.indexOf(g.game);
+  if (!g.practice && g.bag.length > 0 && !g.bag.includes(missed)) g.bag.push(missed);
   g.faster = false;
   ctl.playing = false; g.game.cancelInput?.();
   sfx('lose');
@@ -147,12 +153,13 @@ export function answerQuiz(i: number): void {
 }
 
 function finishRun(): void {
+  if (g.quiz.list.length) meta.recordQuiz?.(g.quiz.right, g.quiz.list.length);
   g.bonus = g.quiz.right; g.score += g.bonus;
   g.state = 'over'; g.st = 0;
   saveBest();
 }
 
-export function openScreen(s: 'cards' | 'topics' | 'practice'): void { g.state = s; g.st = 0; }
+export function openScreen(s: 'cards' | 'topics' | 'practice' | 'progress'): void { g.state = s; g.st = 0; }
 
 /** Leave the run and go back to the title screen; the score still counts toward the best. */
 export function goHome(): void {
@@ -206,8 +213,8 @@ export function debugStart(i: number): void {
   g.state = 'play'; g.st = 0;
 }
 
-/** Dev only: open a menu screen directly (used by ?screen=cards|topics|quiz). */
+/** Dev only: open a menu screen directly (used by ?screen=cards|topics|progress|quiz). */
 export function debugScreen(s: string): void {
-  if (s === 'cards' || s === 'topics') { openScreen(s); return; }
+  if (s === 'cards' || s === 'topics' || s === 'progress') { openScreen(s); return; }
   if (s === 'quiz') { meta.readingQuiz = true; startRun(); g.lives = 0; startQuiz(); }
 }

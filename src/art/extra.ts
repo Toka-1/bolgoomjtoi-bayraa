@@ -52,9 +52,10 @@ export function extraDanger(kind:ExtraKind):void {
     ctx.restore();return;
   }
   if(kind==='stairs'){
-    ctx.strokeStyle='#b67055';ctx.lineWidth=2.5;
-    for(let i=1;i<6;i++)seg(92+i*22,435+i*25,302,435+i*25);
-    stopHint(274,450,13);ctx.restore();return;
+    // a soft warning glow on the treads ahead of Bayraa
+    ctx.fillStyle='rgba(229,51,42,.22)';
+    for(let i=1;i<7;i++)rr(99+22*i,433+25*i,22,7,3);
+    stopHint(214,440,13);ctx.restore();return;
   }
   const point=hazardPoint(kind);
   const top=kind==='oven'?68:kind==='kettle'?38:kind==='bag'?45:kind==='medicine'?30:kind==='iron'?23:kind==='glass'?18:kind==='battery'?10:10;
@@ -117,6 +118,51 @@ function paintRoom(kitchen:boolean):void {
   skirting(520);
   if(kitchen)perspectiveFloor(520,'#d9c9ad','rgba(120,95,70,.25)');
   else planks(520,H,180,31,'#c89562','#8a5c32');
+}
+
+/**
+ * Side-view staircase descending to the right from a landing at the left edge. Tread i spans
+ * x0+tw*i … x0+tw*(i+1) at y0+rh*i; the rail is drawn along (ax,ay)→(bx,by). k scales strokes.
+ */
+function staircase(x0:number,y0:number,tw:number,rh:number,n:number,k:number,rail:readonly [number,number,number,number]):void {
+  const base=y0+rh*n,[ax,ay,bx,by]=rail,railY=(x:number)=>ay+(x-ax)*(by-ay)/(bx-ax);
+  ctx.save();ctx.lineJoin='round';ctx.lineCap='round';
+  ctx.fillStyle='rgba(40,25,10,.2)';ell(x0+tw*n*.6,base+2*k,tw*n*.75,7*k);
+  // solid body under the treads, including the landing block on the left
+  const edge=():void=>{ctx.moveTo(0,y0);ctx.lineTo(x0,y0);for(let i=0;i<n;i++){ctx.lineTo(x0+tw*(i+1),y0+rh*i);ctx.lineTo(x0+tw*(i+1),y0+rh*(i+1));}};
+  ctx.beginPath();edge();ctx.lineTo(0,base);ctx.closePath();
+  ctx.fillStyle=lin(0,y0,0,base,[[0,'#a47a54'],[1,'#7a5538']]);ctx.fill();
+  ctx.save();ctx.clip();
+  // diagonal stringer and a panel on the landing block give the mass some structure
+  ctx.strokeStyle='rgba(255,230,190,.16)';ctx.lineWidth=5*k;seg(x0,y0+rh*1.4,x0+tw*n,base+rh*.4);
+  ctx.strokeStyle='rgba(50,30,15,.25)';ctx.lineWidth=1.5*k;
+  if(x0>24*k)ctx.strokeRect(10*k,y0+16*k,x0-20*k,base-y0-26*k);
+  ctx.restore();
+  // carpet runner over every tread and riser, with a light nosing
+  ctx.beginPath();edge();ctx.strokeStyle='#a83f35';ctx.lineWidth=7*k;ctx.stroke();
+  ctx.save();ctx.translate(0,-2.5*k);ctx.beginPath();edge();ctx.strokeStyle='#d0675a';ctx.lineWidth=2*k;ctx.stroke();ctx.restore();
+  for(let i=0;i<n;i++){ctx.fillStyle='#f4b400';circ(x0+tw*(i+1),y0+rh*i,1.8*k);}
+  // balusters, newel posts and the handrail
+  ctx.strokeStyle='#efe4cf';ctx.lineWidth=3*k;
+  for(let i=0;i<n;i++){const x=x0+tw*(i+.5);if(x>ax&&x<bx)seg(x,y0+rh*i-3*k,x,railY(x));}
+  const post=(x:number,top:number,bottom:number):void=>{ctx.fillStyle='#6b4630';rr(x-4*k,top,8*k,bottom-top,2*k);ctx.fillStyle='#c49a5e';circ(x,top-2*k,5*k);};
+  post(ax,ay,y0-3*k);
+  post(bx,by,y0+rh*Math.min(n-1,Math.floor((bx-x0)/tw))-3*k);
+  ctx.strokeStyle='#5a3b26';ctx.lineWidth=8*k;seg(ax,ay,bx,by);
+  ctx.strokeStyle='rgba(255,215,160,.45)';ctx.lineWidth=2*k;seg(ax+4*k,ay-2*k,bx-4*k,by-2*k);
+  ctx.restore();
+}
+
+/** Small indoor backdrop for the 320×240 failure stories. */
+function vignetteRoom():void {
+  ctx.fillStyle=lin(0,0,0,202,[[0,'#ecdcbf'],[1,'#f6ead4']]);ctx.fillRect(0,0,320,202);
+  ctx.fillStyle='rgba(190,140,80,.14)';
+  for(let y=14;y<200;y+=26)for(let x=(y/26)%2<1?0:13;x<320;x+=26){ctx.beginPath();ctx.moveTo(x,y-4);ctx.lineTo(x+3.5,y);ctx.lineTo(x,y+4);ctx.lineTo(x-3.5,y);ctx.closePath();ctx.fill();}
+  roomWindow(250,26,48,58,false);
+  ctx.fillStyle=lin(0,194,0,202,[[0,'#c0895a'],[1,'#6d4524']]);ctx.fillRect(0,194,320,8);
+  ctx.fillStyle=lin(0,202,0,240,[[0,'#9c6c42'],[1,'#c89562']]);ctx.fillRect(0,202,320,38);
+  ctx.strokeStyle='rgba(45,22,6,.3)';ctx.lineWidth=1;
+  for(let x=-200;x<=520;x+=34)seg(160+(x-160)*.6,202,x,240);
 }
 
 /** Full-size scene used by gameplay, menu snapshots and the safe-action animation. */
@@ -190,9 +236,11 @@ export function extraLesson(kind:ExtraKind,p:number,failed=false):void {
 /** Hazard-specific failure stories. Parameters are elapsed-time phases, never game state. */
 export function extraConsequence(kind:ExtraKind,p:number,r:number,settle:number):void {
   ctx.save();
-  ctx.fillStyle='#f0e2ce';ctx.fillRect(0,0,320,240);
-  ctx.fillStyle='#c6aa86';ctx.fillRect(0,202,320,38);
-  if(kind==='helmet'||kind==='sidewalk')outdoorBackdrop(kind==='helmet'?'park':'city');
+  if(kind==='helmet'||kind==='sidewalk'){
+    ctx.fillStyle='#f0e2ce';ctx.fillRect(0,0,320,240);
+    ctx.fillStyle='#c6aa86';ctx.fillRect(0,202,320,38);
+    outdoorBackdrop(kind==='helmet'?'park':'city');
+  } else vignetteRoom();
   const marks=(x:number,y:number,color='#bc6547')=>{
     ctx.strokeStyle=color;ctx.lineWidth=3;
     for(let i=0;i<3;i++){const a=-2.4+i*.8;seg(x+Math.cos(a)*9,y+Math.sin(a)*9,x+Math.cos(a)*19,y+Math.sin(a)*19);}
@@ -210,9 +258,7 @@ export function extraConsequence(kind:ExtraKind,p:number,r:number,settle:number)
       break;
     }
     case 'stairs':
-      for(let i=0;i<6;i++){ctx.fillStyle=i%2?'#b39878':'#cbb494';rr(65+i*25,130+i*15,230-i*25,16,1);}
-      ctx.strokeStyle='#7e5c42';ctx.lineWidth=6;seg(56,78,213,181);
-      for(let i=0;i<5;i++){ctx.lineWidth=3;seg(65+i*31,85+i*20,65+i*31,137+i*20);}
+      staircase(60,130,25,15,6,.62,[56,72,200,162]);
       bayraa(95+p*20+r*55,145+p*10+r*64,1,{rot:r*1.4,mood:r>.1?'hurt':'ok',injury:r>.1?'head':undefined,arms:r,noShadow:true});
       if(r>.5)marks(275,204);
       break;

@@ -4,6 +4,7 @@ import { progress, unlockCard } from './progress';
 import { games } from '../games';
 import { speak, stopSpeaking } from '../core/audio';
 import { OUTFITS } from '../art/look';
+import { recordAttempt, recordQuiz } from './learning';
 
 export interface QuizItem extends Quiz { cmd: string }
 
@@ -13,7 +14,12 @@ export interface QuizItem extends Quiz { cmd: string }
  */
 export const meta = {
   narrate: (message: string): void => speak(message),
+  /** Read the round's command aloud, for children who cannot read it yet. */
+  announce: (cmd: string): void => speak(cmd),
   silence: (): void => stopSpeaking(),
+  /** Learning record for the progress screen (first try vs after the lesson). */
+  record: (cmd: string, ok: boolean): void => recordAttempt(cmd, ok),
+  recordQuiz: (right: number, total: number): void => recordQuiz(right, total),
   /** Reading questions belong to the adult-led mode. */
   readingQuiz: false,
   unlock: (cmd: string): boolean => unlockCard(cmd),

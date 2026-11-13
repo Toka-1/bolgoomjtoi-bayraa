@@ -89,6 +89,8 @@ class Audio {
   currentTime=0;state='running';destination={};
   createGain(){return node();}createBiquadFilter(){return node();}
   createOscillator(){const n=node();notes.push(n);return n;}
+  sampleRate=8000;createBuffer(_c,len){const d=new Float32Array(len);return {getChannelData:()=>d};}
+  createBufferSource(){const n=node();notes.push(n);return n;}
 }
 const audio=load('core/audio.ts',['unlockAudio','setMusicScene','schedule'],{
   window:{AudioContext:Audio,setInterval(fn){intervals.push(fn);return 1;}},

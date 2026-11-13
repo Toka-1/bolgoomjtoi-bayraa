@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Хоолой бичих · Болгоомжтой Баяраа</title>
+<style>
+  :root { --ink: #1b1f3b; --cream: #fbf6ec; --gold: #f4b400; --red: #e5332a; --green: #2e9d5b; --muted: #7a7c8c; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--cream); color: var(--ink); font: 16px/1.4 Rubik, system-ui, sans-serif; }
+  header { position: sticky; top: 0; background: var(--ink); color: #fff; padding: 14px 20px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; z-index: 1; }
+  header h1 { font-size: 20px; margin: 0; }
+  #count { color: var(--gold); font-weight: 700; }
+  #note { font-size: 13px; opacity: .75; flex-basis: 100%; }
+  main { max-width: 860px; margin: 0 auto; padding: 16px; }
+  .row { display: grid; grid-template-columns: 28px 1fr auto; gap: 12px; align-items: center; background: #fff; border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; border: 3px solid transparent; }
+  .row.current { border-color: var(--gold); }
+  .row.done .dot { background: var(--green); }
+  .dot { width: 14px; height: 14px; border-radius: 50%; background: #d9d2c3; justify-self: center; }
+  .kind { font-size: 12px; color: var(--muted); font-weight: 700; letter-spacing: .5px; }
+  .text { font-size: 17px; }
+  .btns { display: flex; gap: 6px; }
+  button { font: inherit; font-weight: 700; border: 0; border-radius: 10px; padding: 8px 12px; cursor: pointer; background: #ece6d8; color: var(--ink); }
+  button.rec { background: var(--red); color: #fff; min-width: 92px; }
+  button.rec.on { background: var(--ink); }
+  button:disabled { opacity: .35; cursor: default; }
+</style>
+</head>
+<body>
+<canvas id="c" hidden></canvas>
+<header>
+  <h1>Хоолой бичих</h1>
+  <span id="count"></span>
+  <span id="note">Space: бичих / зогсоох · ↑↓: мөр солих · P: сонсох. Бичлэг шууд public/voice хавтсанд хадгалагдана. Чимээгүй өрөөнд, утсаа амнаасаа 20 см зайтай барьж, тод, удаан уншаарай.</span>
+</header>
+<main id="list"></main>
+<script type="module" src="/src/record.ts"></script>
+</body>
+</html>

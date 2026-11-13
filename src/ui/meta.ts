@@ -9,6 +9,7 @@ import { progress, toggleTopic, wear, setSound } from '../meta/progress';
 import { OUTFITS, look } from '../art/look';
 import { bayraa } from '../art/bayraa';
 import { meta } from '../meta/hooks';
+import { summary, weakest, masteryOf, learning } from '../meta/learning';
 import { drawLesson, lessonButton, LESSON_CONTINUE, LESSON_REPLAY } from './lessons';
 import { g, startRun, startPractice, goHome, openScreen, answerQuiz, afterResult } from '../flow';
 import {
@@ -16,7 +17,7 @@ import {
   inBtn, inHudHome, inCircle, goldFace, panel, button, backIcon,
 } from './widgets';
 
-/** Read-aloud button on the failure tip card (only drawn where a Mongolian voice exists). */
+/** Read-aloud button on the failure tip card (drawn when a recording or a Mongolian voice exists). */
 export const SPEAK_BTN = { x: 310, y: 474, r: 20 };
 
 const carded = games.filter(m => infoOf(m.cmd));
@@ -162,7 +163,8 @@ function drawDetail(i: number): void {
 
 /* ---------- teacher mode ---------- */
 const topicRow = (i: number): Btn => ({ x: 30, y: 128 + i * 88, w: W - 60, h: 74 });
-const START_BTN: Btn = { x: 70, y: 500, w: 220, h: 62 };
+const START_BTN: Btn = { x: 30, y: 500, w: 186, h: 62 };
+const PROGRESS_BTN: Btn = { x: 228, y: 500, w: 102, h: 62 };
 
 export function drawTopics(): void {
   ctx.fillStyle = lin(0, 0, 0, H, [[0, '#526a76'], [1, '#344951']]); ctx.fillRect(0, 0, W, H);
@@ -186,8 +188,73 @@ export function drawTopics(): void {
     text(n + ' үе', b.x + b.w - 18, b.y + 38, 14, on ? '#6b7090' : 'rgba(255,255,255,.6)', { align: 'right', w: 700 });
   });
   button(START_BTN, 'ЭХЛЭХ');
+  button(PROGRESS_BTN, 'АХИЦ', true);
   wrap('Сонголт хадгалагдана. Нүүр хуудасны «ТОГЛОХ» ч энэ сэдвүүдээр тоглоно.', W / 2, 590, W - 60, 12, '#c9cbe0');
-  text('Унших асуулттай', W / 2, 550, 14, '#c9cbe0', { w: 500 });
+  text('Унших асуулттай', START_BTN.x + START_BTN.w / 2, 550, 14, '#c9cbe0', { w: 500 });
+}
+
+
+/* ---------- progress: first try (before the lesson) vs afterwards ---------- */
+const pct = (v: number): string => Math.round(v * 100) + '%';
+
+export function drawProgress(): void {
+  ctx.fillStyle = lin(0, 0, 0, H, [[0, '#526a76'], [1, '#344951']]); ctx.fillRect(0, 0, W, H);
+  backIcon(BACK_BTN.x, BACK_BTN.y, BACK_BTN.r);
+  text('АХИЦ', W / 2, 40, 24, goldFace(28, 52), { stroke: C.ink, sw: 5 });
+  const cmds = carded.map(m => m.cmd);
+  const sum = summary(cmds);
+
+  // headline: first attempt vs after the lesson
+  panel(20, 76, W - 40, 150, 18, lin(0, 76, 0, 226, [[0, '#ffffff'], [1, '#eef0f6']]));
+  if (!sum.tried) {
+    wrap('Хүүхэд тоглож эхлэхэд энд ахиц нь харагдана.', W / 2, 140, W - 90, 16, C.ink, 700);
+  } else {
+    text('Анхны оролдлого', 98, 104, 12, '#6b7090', { w: 700 });
+    text(pct(sum.firstRate), 98, 146, 40, '#d0583f');
+    text('Сургамжийн дараа', 262, 104, 12, '#6b7090', { w: 700 });
+    if (sum.laterRate === null) text('…', 262, 140, 40, '#9aa0b8');
+    else text(pct(sum.laterRate), 262, 146, 40, '#3d9a62');
+    ctx.strokeStyle = C.ink; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath(); ctx.moveTo(160, 146); ctx.lineTo(198, 146); ctx.moveTo(188, 136); ctx.lineTo(199, 146); ctx.lineTo(188, 156); ctx.stroke();
+    const note = sum.laterRate === null ? 'Алдсан аюулаа дахин тоглоход харьцуулалт гарна'
+      : sum.laterRate > sum.firstRate ? 'Сургамжийн дараа илүү зөв хийж байна'
+      : 'Давтлага хэрэгтэй: алдсан аюулууд дахин гарна';
+    wrap(note, W / 2, 196, W - 80, 12, '#6b7090', 700);
+  }
+
+  // learned hazards, per topic
+  text('Сурсан аюул  ' + sum.learned + ' / ' + cmds.length, 30, 254, 15, '#fff', { align: 'left', w: 700 });
+  TOPICS.forEach((tp, i) => {
+    const mine = cmds.filter(c => infoOf(c)!.topic === tp.id);
+    const done = mine.filter(c => masteryOf(c) === 'learned').length;
+    const y = 284 + i * 40;
+    text(tp.label, 30, y, 14, '#fff', { align: 'left', w: 700 });
+    ctx.fillStyle = 'rgba(255,255,255,.15)'; rr(108, y - 8, 180, 16, 8);
+    if (mine.length && done) { ctx.fillStyle = '#f4b400'; rr(108, y - 8, Math.max(16, 180 * done / mine.length), 16, 8); }
+    text(done + '/' + mine.length, W - 30, y, 13, '#c9cbe0', { align: 'right', w: 700 });
+  });
+
+  // quiz before/after
+  const qf = learning.quizFirst, ql = learning.quizLast;
+  let y = 452;
+  if (qf && ql) {
+    text('Асуулт:  анх ' + qf.right + '/' + qf.total + '  →  сүүлд ' + ql.right + '/' + ql.total, 30, y, 14, '#fff', { align: 'left', w: 700 });
+    y += 34;
+  }
+
+  // what to practise next
+  const weak = weakest(cmds);
+  if (weak.length) {
+    text('Давтах хэрэгтэй:', 30, y, 14, '#fff', { align: 'left', w: 700 });
+    weak.forEach((c, i) => {
+      const by = y + 22 + i * 34;
+      ctx.fillStyle = 'rgba(255,255,255,.12)'; rr(30, by, W - 60, 28, 10);
+      fittedLabel(infoOf(c)!.card, W / 2, by + 14, W - 90, 13, '#fff');
+    });
+  } else if (sum.tried) {
+    text('Тоглосон бүх аюулаа сурсан байна!', W / 2, y + 10, 14, '#f4b400', { w: 700 });
+  }
+  text('Мэдээлэл зөвхөн энэ төхөөрөмж дээр хадгалагдана', W / 2, H - 22, 11, 'rgba(255,255,255,.55)', { w: 500 });
 }
 
 /* ---------- end-of-run quiz ---------- */
@@ -271,8 +338,12 @@ export function uiPress(x: number, y: number): boolean {
       const i = TOPICS.findIndex((_, k) => inBtn(topicRow(k), x, y));
       if (i >= 0) { toggleTopic(TOPICS[i].id); sfx('tap'); return true; }
       if (inBtn(START_BTN, x, y)) { meta.readingQuiz = true; startRun(); }
+      else if (inBtn(PROGRESS_BTN, x, y)) { openScreen('progress'); sfx('tap'); }
       return true;
     }
+    case 'progress':
+      if (inCircle(BACK_BTN, x, y)) { openScreen('topics'); sfx('tap'); }
+      return true;
     case 'over':
       if (g.st > 0.6 && inBtn(AGAIN_BTN, x, y)) startRun();
       else if (g.st > 0.6 && inBtn(HOME_BTN, x, y)) goHome();
@@ -290,7 +361,7 @@ export function uiPress(x: number, y: number): boolean {
   if (g.state === 'result' && !g.ok) {
     if (g.st < g.effectDur) return true;
     if (inCircle(LESSON_REPLAY, x, y)) { g.st = g.effectDur; speak(g.game.tip); }
-    else if (canSpeak() && inCircle(SPEAK_BTN, x, y)) speak(g.game.tip);
+    else if (canSpeak(g.game.tip) && inCircle(SPEAK_BTN, x, y)) speak(g.game.tip);
     else if (g.st >= g.effectDur + 3 && inCircle(LESSON_CONTINUE, x, y)) afterResult();
     return true;
   }
@@ -314,7 +385,8 @@ export function uiKey(k: string): boolean {
   }
   if (g.state === 'quiz' && (k === '1' || k === '2' || k === '3')) { answerQuiz(Number(k) - 1); return true; }
   if (g.state === 'topics' && k === 'Enter') { meta.readingQuiz = true; startRun(); return true; }
-  if ((g.state === 'cards' || g.state === 'topics') && k === ' ') return true;
+  if (g.state === 'progress' && (k === 'Escape' || k === 'Backspace')) { openScreen('topics'); return true; }
+  if ((g.state === 'cards' || g.state === 'topics' || g.state === 'progress') && k === ' ') return true;
   return false;
 }
 

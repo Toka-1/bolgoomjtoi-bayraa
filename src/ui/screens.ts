@@ -1,7 +1,7 @@
 import { ctx, W, H, clock, reduce, layer } from '../core/canvas';
 import { C, lin, rad, rr, circ, text } from '../core/draw';
 import { audioEnabled, canSpeak } from '../core/audio';
-import { drawCards, drawTopics, drawQuiz, drawPractice, SPEAK_BTN } from './meta';
+import { drawCards, drawTopics, drawQuiz, drawPractice, drawProgress, SPEAK_BTN } from './meta';
 import { drawLesson, lessonButton, check, LESSON_CONTINUE, LESSON_REPLAY } from './lessons';
 import { progress } from '../meta/progress';
 import { TOPICS,infoOf } from '../meta/content';
@@ -24,6 +24,7 @@ export function render(): void {
   if (g.state === 'title') { drawTitle(); vignette(0.12); }
   else if (g.state === 'cards') drawCards();
   else if (g.state === 'topics') drawTopics();
+  else if (g.state === 'progress') drawProgress();
   else if (g.state === 'practice') drawPractice();
   else {
     drawLevelView(g.game,g.state==='play',(g.failures.get(g.game.cmd)??0)>=3);
@@ -141,7 +142,7 @@ function drawResult(): void {
   ctx.save(); ctx.globalAlpha = g.st >= g.effectDur + 3 ? 1 : 0.3;
   lessonButton(LESSON_CONTINUE.x, LESSON_CONTINUE.y, LESSON_CONTINUE.r, false);
   ctx.restore();
-  if (canSpeak()) soundIcon(SPEAK_BTN.x, SPEAK_BTN.y, SPEAK_BTN.r, true);
+  if (canSpeak(g.game.tip)) soundIcon(SPEAK_BTN.x, SPEAK_BTN.y, SPEAK_BTN.r, true);
 }
 
 function paintTitle(): void {
