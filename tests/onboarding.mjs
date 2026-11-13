@@ -33,6 +33,19 @@ for(const [saved,blocked] of [['[]',false],['invalid JSON',false],['null',false]
 const survival=setup();survival.games[0].timeoutWin=true;survival.startPractice(0);survival.step(5);
 assert.equal(survival.g.ok,true);assert.equal(survival.g.score,0);assert.equal(survival.g.lives,3);
 
+const hints=setup();hints.startPractice(0);
+for(let attempt=1;attempt<=3;attempt++){
+  hints.ctl.lose('miss');hints.ctl.lose('duplicate');
+  assert.equal(hints.g.failures.get('first'),attempt,'each failed round counts once');
+  hints.afterResult();
+}
+assert.equal(hints.g.failures.get('first')>=3,true,'third failure enables hints on retry');
+hints.startPractice(1);
+assert.equal(hints.g.failures.get('second')??0,0,'levels track failures separately');
+hints.step(5);assert.equal(hints.g.failures.get('second'),1,'timeouts count as failures');
+hints.goHome();hints.startRun();
+assert.equal(hints.g.failures.get('first'),3,'failures survive new runs');
+
 const harder=setup();harder.startRun();
 assert.equal(harder.g.speed,1.35);
 assert.equal(harder.g.dur,5/1.35);

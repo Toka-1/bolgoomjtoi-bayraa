@@ -18,6 +18,8 @@ export const g = {
   best: 0, practice: false,
   /** increments every round so stale input can be ignored */
   round: 0,
+  /** Per-level failures this visit, shared by practice and scored runs. */
+  failures: new Map<string, number>(),
   /** games seen this run, for the end-of-run quiz */
   played: [] as string[],
   /** this win earned a new safety card */
@@ -99,6 +101,7 @@ function win(): void {
 
 function lose(msg: string): void {
   if (g.state !== 'play') return;
+  g.failures.set(g.game.cmd, (g.failures.get(g.game.cmd) ?? 0) + 1);
   g.state = 'result'; g.ok = false; g.msg = msg; g.st = 0; g.resDur = Infinity;
   g.lessonNarrated = false;
   if (!g.practice) g.lives--;

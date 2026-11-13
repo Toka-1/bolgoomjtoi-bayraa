@@ -8,6 +8,7 @@ import { perspectiveFloor } from '../art/depth';
 import { reversingCar, damagedCord, snowRoof, icicle } from '../art/prevention';
 import type { Micro } from './types';
 import {outdoorBackdrop} from '../art/outdoors';
+import { highlight } from '../ui/gesture';
 
 const CHILD = { x: 182, y: 591, scale: 1.1, safeX: 146 };
 const CORD = { x: 270, y: 578, scale: .7 };
@@ -23,6 +24,7 @@ abstract class Retreat implements Micro {
   readonly winText = 'АЮУЛААС ХОЛДЛОО!';
   dead = false; safe = false; walk = 0; approach = 0;
   init(): void { this.dead = false; this.safe = false; this.walk = 0; this.approach = 0; }
+  hint(): void { if (!this.dead && !this.safe) highlight(54, 485, 44); }
   protected leave(): void { if (!this.dead && !this.safe) { this.safe = true; ctl.win(); } }
   protected fail(): void { if (!this.dead && !this.safe) { this.dead = true; ctl.lose(this.lose); } }
   key(k: string, down: boolean): void { if (down && k === 'ArrowLeft') this.leave(); }

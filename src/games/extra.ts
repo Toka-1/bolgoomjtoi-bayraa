@@ -5,6 +5,7 @@ import {dist} from '../core/draw';
 import {extraScene, extraDanger, hazardPoint, HELMET_HEAD} from '../art/extra';
 import {EXTRA_LEVELS, type ExtraDefinition} from '../meta/extra';
 import type {Micro} from './types';
+import {highlight} from '../ui/gesture';
 
 abstract class Extra implements Micro {
   readonly focus = {zoom:1.3,y:470,height:400};
@@ -25,6 +26,7 @@ abstract class Extra implements Micro {
 }
 
 export class Helmet extends Extra {
+  hint():void{if(!this.safe&&!this.dead){highlight(this.x,this.y-10,36);highlight(HELMET_HEAD.x,HELMET_HEAD.y,32);}}
   readonly focus = {zoom:1.35,y:510,height:330};
   readonly definition=EXTRA_LEVELS[0];
   x=280;y=470;drag=false;private arrows=new DragKeys();
@@ -40,6 +42,7 @@ export class Helmet extends Extra {
 }
 
 export class Stairs extends Extra {
+  hint():void{if(!this.safe&&!this.dead)highlight(80,375,24);}
   readonly focus = {zoom:1.05,y:445,height:460};
   readonly definition=EXTRA_LEVELS[1];
   private pointer=false;private heldKeys=new Set<string>();private slip=0;
@@ -51,6 +54,7 @@ export class Stairs extends Extra {
     this.pointer=dist(x,y,72+t*156,365+t*180)<=24;
   }
   up():void{this.pointer=false;}
+  move(x:number,y:number):void{if(this.pointer)this.down(x,y);}
   key(k:string,down:boolean):void{if(k!==' '&&k!=='ArrowDown')return;if(down)this.heldKeys.add(k);else this.heldKeys.delete(k);}
   update(dt:number):void{
     if(this.dead||this.safe)return;
@@ -60,6 +64,7 @@ export class Stairs extends Extra {
 }
 
 export class Sidewalk extends Extra {
+  hint():void{if(!this.safe&&!this.dead){highlight(this.x,this.y-45,40);highlight(130,365,35);}}
   readonly focus = {zoom:1.05,y:435,height:460};
   readonly definition=EXTRA_LEVELS[2];
   x=130;y=580;drag=false;private arrows=new DragKeys();
@@ -83,6 +88,7 @@ export class Sidewalk extends Extra {
 }
 
 abstract class AskAdult extends Extra {
+  hint():void{if(!this.safe&&!this.dead)highlight(100,460,44);}
   down(x:number,y:number):void{
     if(this.safe||this.dead)return;
     if(x>=55&&x<=145&&y>=355&&y<=565){this.win();return;}

@@ -142,10 +142,26 @@ export function extraScene(kind:ExtraKind,p=0,failed=false,hx=280,hy=470,helmetO
     caregiver(82,430,.9);bayraa(failed?220:sidewalkX,580-p*170,1.05-p*.15,{mood:failed?'scared':p>=1?'happy':'ok'});return;
   }
   if(kind==='stairs'){
-    for(let i=0;i<6;i++){ctx.fillStyle=i%2?'#b29270':'#c5a887';rr(92+i*22,410+i*25,210-i*22,25,2);}
-    ctx.strokeStyle='#523e31';ctx.lineWidth=9;seg(72,365,228,545);
-    for(let i=0;i<5;i++){ctx.lineWidth=4;seg(82+i*32,377+i*36,82+i*32,425+i*36);}
-    caregiver(305,598,1.1);bayraa(110+p*132,435+p*150,1.0,{mood:failed?'scared':p>=1?'happy':'ok',arms:.55});return;
+    // Feet follow the tread tops, ending on the lower landing at y=585.
+    ctx.fillStyle='#d9c5a5';rr(48,421,254,14,3);
+    for(let i=0;i<6;i++){
+      const x=92+i*22,y=435+i*25,w=210-i*22;
+      ctx.fillStyle=i%2?'#a4815e':'#b5916b';rr(x,y,w,25,2);
+      ctx.fillStyle='#e3c7a0';rr(x,y,w,6,2);
+      ctx.strokeStyle='rgba(82,62,49,.35)';ctx.lineWidth=1;seg(x,y+24,302,y+24);
+    }
+    ctx.fillStyle='#dbc6a5';rr(224,585,112,14,3);
+    // Posts sit behind the child; the graspable rail stays in front of the hand.
+    ctx.strokeStyle='#74604c';ctx.lineWidth=4;
+    for(let i=0;i<6;i++){
+      const x=92+i*22;
+      seg(x,365+(x-72)*180/156,x,435+i*25);
+    }
+    caregiver(305,598,1.1);
+    bayraa(110+p*132,435+p*150,1.0,{mood:failed?'scared':p>=1?'happy':'ok',arms:.88});
+    ctx.lineCap='round';ctx.strokeStyle='#523e31';ctx.lineWidth=12;seg(72,365,228,545);
+    ctx.strokeStyle='#d6ac67';ctx.lineWidth=5;seg(72,363,228,543);
+    return;
   }
   if(kind==='helmet'){
     ctx.fillStyle='#99724f';rr(230,480,113,12,3);rr(239,492,9,69,2);rr(324,492,9,69,2);

@@ -140,14 +140,17 @@ for (const [file,name,seconds] of [
 // Verify the actual render loop calls action highlights only while a round is active.
 const noop=()=>{};let hints=0;
 const canvas=new Proxy({}, {get:()=>noop,set:()=>true});
-const scene={state:'play',score:0,lives:3,frac:0,practice:false,st:0,effectDur:2.4,ok:false,
+const scene={state:'play',score:0,lives:3,frac:0,practice:false,st:0,effectDur:2.4,ok:false,failures:new Map(),
   game:{draw:noop,danger:noop,hint(){hints++;}}};
 const {render}=load('ui/screens.ts',['render'],{
-  levelFrame:()=>({x:8,y:96,w:344,h:500}),drawLevelView:(m,active)=>{m.draw();if(active)m.danger?.();},ctx:canvas,W:360,H:640,C:{ink:'#123',gold:'#fc0'},g:scene,reduce:true,
+  levelFrame:()=>({x:8,y:96,w:344,h:500}),drawLevelView:(m,active,showHints)=>{m.draw();if(active){m.danger?.();if(showHints)m.hint?.();}},ctx:canvas,W:360,H:640,C:{ink:'#123',gold:'#fc0'},g:scene,reduce:true,
   games,HUD_HOME:{},HUD_SOUND:{},circ:noop,rad:noop,lin:noop,rr:noop,text:noop,
   grain:noop,vignette:noop,goldFace:noop,homeIcon:noop,soundIcon:noop,audioEnabled:()=>false,drawConsequence:noop,
 });
 render();assert.equal(hints,0,'scored rounds leave the solution for the player to discover');
 scene.practice=true;render();assert.equal(hints,0,'practice uses the same gameplay UI as scored play');
-scene.state='result';render();assert.equal(hints,0);
+scene.failures.set(scene.game.cmd,2);render();assert.equal(hints,0,'two failures do not reveal hints');
+scene.failures.set(scene.game.cmd,3);render();assert.equal(hints,1,'three failures reveal hints');
+scene.practice=false;render();assert.equal(hints,2,'scored play also shows unlocked hints');
+scene.state='result';render();assert.equal(hints,2,'results do not draw gameplay hints');
 console.log('Round variety, difficulty stages, persistent outfits, wind and crossing checks passed.');

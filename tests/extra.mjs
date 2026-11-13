@@ -26,6 +26,14 @@ stairs.init();stairs.key(' ',true);stairs.key('ArrowDown',true);stairs.key(' ',f
 stairs.init();stairs.down(70,380);stairs.cancelInput();stairs.update(1);assert.equal(ctl.losses,1,'focus cancellation clears the railing hold');
 stairs.update(10);assert.equal(ctl.losses,1);
 stairs.init();stairs.down(220,370);stairs.update(.4);assert.equal(stairs.progress,0,'touching empty wall cannot hold the railing');
+stairs.init();stairs.down(80,375);stairs.move(300,375);stairs.update(.4);assert.equal(stairs.progress,0,'moving off the rail releases the hold');
+const stairLines=[];
+const stairsArt=load('art/extra.ts',['extraScene'],{...artBindings,seg:(...line)=>stairLines.push(line)});
+stairsArt.extraScene('stairs');
+for(let i=0;i<6;i++){
+ const x=92+i*22,y=435+i*25;
+ assert.ok(stairLines.some(([ax,ay,bx,by])=>ax===x&&bx===x&&by===y&&Math.abs(ay-(365+(x-72)*180/156))<.001),'each rail post connects the handrail to its tread');
+}
 
 const sidewalk=new classes.Sidewalk();sidewalk.init();sidewalk.down(130,535);sidewalk.move(130,365);sidewalk.cancelInput();sidewalk.up();assert.equal(ctl.wins,3);
 sidewalk.init();sidewalk.select(130,535);sidewalk.select(130,365);assert.equal(ctl.wins,4,'right-click can complete the sidewalk route');

@@ -23,13 +23,13 @@ export function inLevelView(x:number,y:number,game?:Micro):boolean {
   const f=game?levelFrame(game):LEVEL_VIEW;
   return x>=f.x&&x<=f.x+f.w&&y>=f.y&&y<=f.y+f.h;
 }
-export function drawLevelView(game:Micro,active:boolean):void {
+export function drawLevelView(game:Micro,active:boolean,showHints=false):void {
   ctx.fillStyle='#253942';ctx.fillRect(0,0,W,H);
   const f=levelFrame(game);
   ctx.save();ctx.beginPath();ctx.roundRect(f.x,f.y,f.w,f.h,18);ctx.clip();
   ctx.fillStyle='#d7ded8';ctx.fillRect(f.x,f.y,f.w,f.h);
   const c=levelCamera(game);ctx.translate(c.x,c.y);ctx.scale(c.scale,c.scale);
-  game.draw();if(active)game.danger?.();ctx.restore();
+  game.draw();if(active){game.danger?.();if(showHints)game.hint?.();}ctx.restore();
   ctx.strokeStyle='rgba(245,235,204,.22)';ctx.lineWidth=1.5;
   ctx.beginPath();ctx.roundRect(f.x,f.y,f.w,f.h,18);ctx.stroke();
 }

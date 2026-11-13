@@ -26,7 +26,7 @@ export function render(): void {
   else if (g.state === 'topics') drawTopics();
   else if (g.state === 'practice') drawPractice();
   else {
-    drawLevelView(g.game,g.state==='play');
+    drawLevelView(g.game,g.state==='play',(g.failures.get(g.game.cmd)??0)>=3);
     vignette();
     hud();
     const frame=levelFrame(g.game);
